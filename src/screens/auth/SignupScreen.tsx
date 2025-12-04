@@ -3,6 +3,7 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView,
 import { useAuth } from '../../context/AuthContext';
 
 const SignupScreen = () => {
+    const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -13,8 +14,13 @@ const SignupScreen = () => {
         // Debug: Show alert to confirm button is working
         console.log('Signup button pressed!');
 
-        if (!email || !password || !confirmPassword) {
+        if (!fullName || !email || !password || !confirmPassword) {
             Alert.alert('Error', 'Please fill in all fields');
+            return;
+        }
+
+        if (fullName.trim().length < 2) {
+            Alert.alert('Error', 'Please enter your full name');
             return;
         }
 
@@ -33,7 +39,7 @@ const SignupScreen = () => {
 
         try {
             console.log('Calling signUp function...');
-            await signUp(email, password);
+            await signUp(email, password, fullName);
             console.log('SignUp successful!');
             Alert.alert('Success', 'Account created! You can now login.');
         } catch (error: any) {
@@ -59,6 +65,15 @@ const SignupScreen = () => {
                 <Text style={styles.subtitle}>Join RideShare Lite today</Text>
 
                 <View style={styles.form}>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Full Name"
+                        value={fullName}
+                        onChangeText={setFullName}
+                        autoCapitalize="words"
+                        editable={!loading}
+                    />
+
                     <TextInput
                         style={styles.input}
                         placeholder="Email"

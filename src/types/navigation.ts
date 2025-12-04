@@ -42,6 +42,10 @@ export type MainTabsParamList = {
     vehicle: string;
     instant?: boolean;
   };
+  EditProfile: undefined;
+  Verification: undefined;
+  Notifications: undefined;
+  Privacy: undefined;
 };
 
 // Navigation Props

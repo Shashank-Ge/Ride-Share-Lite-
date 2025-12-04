@@ -66,6 +66,9 @@ const SearchResultsScreen = () => {
                 instantOnly: filterInstant,
             });
 
+            console.log('🔍 Database returned', dbRides.length, 'rides');
+            console.log('📊 Rides data:', JSON.stringify(dbRides, null, 2));
+
             // Transform database rides to UI format
             const transformedRides: Ride[] = dbRides.map((ride: DBRide) => ({
                 id: ride.id,
@@ -85,6 +88,8 @@ const SearchResultsScreen = () => {
                     : 'Vehicle',
                 instant: ride.instant_booking || false,
             }));
+
+            console.log('✅ Transformed to', transformedRides.length, 'UI rides');
 
             setRides(transformedRides);
         } catch (error) {

@@ -17,6 +17,10 @@ import MyRidesScreen from '../screens/main/MyRidesScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import SearchResultsScreen from '../screens/main/SearchResultsScreen';
 import RideDetailsScreen from '../screens/main/RideDetailsScreen';
+import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import VerificationScreen from '../screens/profile/VerificationScreen';
+import NotificationsScreen from '../screens/profile/NotificationsScreen';
+import PrivacyScreen from '../screens/profile/PrivacyScreen';
 
 // Import types
 import { RootStackParamList, AuthStackParamList, MainTabsParamList } from '../types/navigation';
@@ -127,6 +131,34 @@ const MainNavigator = () => {
             <MainTabs.Screen
                 name="RideDetails"
                 component={RideDetailsScreen}
+                options={{
+                    tabBarButton: () => null, // Hide from tab bar
+                }}
+            />
+            <MainTabs.Screen
+                name="EditProfile"
+                component={EditProfileScreen}
+                options={{
+                    tabBarButton: () => null, // Hide from tab bar
+                }}
+            />
+            <MainTabs.Screen
+                name="Verification"
+                component={VerificationScreen}
+                options={{
+                    tabBarButton: () => null, // Hide from tab bar
+                }}
+            />
+            <MainTabs.Screen
+                name="Notifications"
+                component={NotificationsScreen}
+                options={{
+                    tabBarButton: () => null, // Hide from tab bar
+                }}
+            />
+            <MainTabs.Screen
+                name="Privacy"
+                component={PrivacyScreen}
                 options={{
                     tabBarButton: () => null, // Hide from tab bar
                 }}

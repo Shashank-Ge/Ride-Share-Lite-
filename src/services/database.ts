@@ -272,3 +272,272 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>): 
         return null;
     }
 };
+
+/**
+ * Create a new profile (called during registration)
+ */
+export const createProfile = async (profileData: {
+    id: string;
+    full_name: string;
+    avatar_url?: string;
+}): Promise<Profile | null> => {
+    try {
+        console.log('👤 Creating profile for user:', profileData.id);
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .insert([profileData])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('❌ Error creating profile:', error);
+            throw error;
+        }
+
+        console.log('✅ Profile created successfully');
+        return data;
+    } catch (error) {
+        console.error('💥 Failed to create profile:', error);
+        return null;
+    }
+};
+
+// ============================================
+// BOOKING FUNCTIONS
+// ============================================
+
+export interface Booking {
+    id: string;
+    ride_id: string;
+    passenger_id: string;
+    seats_booked: number;
+    total_price: number;
+    status: 'pending' | 'confirmed' | 'rejected' | 'cancelled';
+    created_at: string;
+    updated_at: string;
+    ride?: Ride;
+    passenger?: Profile;
+}
+
+/**
+ * Create a new booking
+ */
+export const createBooking = async (bookingData: {
+    ride_id: string;
+    passenger_id: string;
+    seats_booked: number;
+    total_price: number;
+    status: 'pending' | 'confirmed';
+}): Promise<Booking | null> => {
+    try {
+        console.log('📝 Creating booking:', bookingData);
+
+        const { data, error } = await supabase
+            .from('bookings')
+            .insert([bookingData])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('❌ Error creating booking:', error);
+            throw error;
+        }
+
+        console.log('✅ Booking created successfully:', data);
+        return data;
+    } catch (error) {
+        console.error('💥 Failed to create booking:', error);
+        return null;
+    }
+};
+
+/**
+ * Fetch all bookings for a passenger
+ */
+export const fetchPassengerBookings = async (passengerId: string): Promise<Booking[]> => {
+    try {
+        console.log('📋 Fetching bookings for passenger:', passengerId);
+
+        const { data, error } = await supabase
+            .from('bookings')
+            .select(`
+                *,
+                ride:rides (
+                    *,
+                    driver:profiles!driver_id (
+                        id,
+                        full_name,
+                        avatar_url
+                    )
+                )
+            `)
+            .eq('passenger_id', passengerId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('❌ Error fetching passenger bookings:', error);
+            throw error;
+        }
+
+        console.log(`✅ Found ${data?.length || 0} bookings`);
+        return data || [];
+    } catch (error) {
+        console.error('💥 Failed to fetch passenger bookings:', error);
+        return [];
+    }
+};
+
+/**
+ * Fetch all bookings for a driver's rides
+ */
+export const fetchDriverBookings = async (driverId: string): Promise<Booking[]> => {
+    try {
+        console.log('📋 Fetching bookings for driver:', driverId);
+
+        const { data, error } = await supabase
+            .from('bookings')
+            .select(`
+                *,
+                ride:rides!inner (
+                    *
+                ),
+                passenger:profiles!passenger_id (
+                    id,
+                    full_name,
+                    avatar_url
+                )
+            `)
+            .eq('ride.driver_id', driverId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('❌ Error fetching driver bookings:', error);
+            throw error;
+        }
+
+        console.log(`✅ Found ${data?.length || 0} booking requests`);
+        return data || [];
+    } catch (error) {
+        console.error('💥 Failed to fetch driver bookings:', error);
+        return [];
+    }
+};
+
+/**
+ * Update booking status (accept/reject/cancel)
+ */
+export const updateBookingStatus = async (
+    bookingId: string,
+    status: 'confirmed' | 'rejected' | 'cancelled'
+): Promise<Booking | null> => {
+    try {
+        console.log(`🔄 Updating booking ${bookingId} to status: ${status}`);
+
+        const { data, error } = await supabase
+            .from('bookings')
+            .update({ status, updated_at: new Date().toISOString() })
+            .eq('id', bookingId)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('❌ Error updating booking status:', error);
+            throw error;
+        }
+
+        console.log('✅ Booking status updated successfully');
+        return data;
+    } catch (error) {
+        console.error('💥 Failed to update booking status:', error);
+        return null;
+    }
+};
+
+/**
+ * Update available seats for a ride
+ */
+export const updateRideSeats = async (
+    rideId: string,
+    seatsToDeduct: number
+): Promise<boolean> => {
+    try {
+        console.log(`🪑 Updating seats for ride ${rideId}, deducting ${seatsToDeduct}`);
+
+        // First, get current available seats
+        const { data: ride, error: fetchError } = await supabase
+            .from('rides')
+            .select('available_seats')
+            .eq('id', rideId)
+            .single();
+
+        if (fetchError || !ride) {
+            console.error('❌ Error fetching ride:', fetchError);
+            return false;
+        }
+
+        const newSeats = ride.available_seats - seatsToDeduct;
+
+        if (newSeats < 0) {
+            console.error('❌ Not enough seats available');
+            return false;
+        }
+
+        const { error: updateError } = await supabase
+            .from('rides')
+            .update({ available_seats: newSeats })
+            .eq('id', rideId);
+
+        if (updateError) {
+            console.error('❌ Error updating seats:', updateError);
+            return false;
+        }
+
+        console.log(`✅ Seats updated: ${ride.available_seats} → ${newSeats}`);
+        return true;
+    } catch (error) {
+        console.error('💥 Failed to update ride seats:', error);
+        return false;
+    }
+};
+
+/**
+ * Restore seats when booking is cancelled
+ */
+export const restoreRideSeats = async (
+    rideId: string,
+    seatsToRestore: number
+): Promise<boolean> => {
+    try {
+        console.log(`🪑 Restoring ${seatsToRestore} seats for ride ${rideId}`);
+
+        const { data: ride, error: fetchError } = await supabase
+            .from('rides')
+            .select('available_seats')
+            .eq('id', rideId)
+            .single();
+
+        if (fetchError || !ride) {
+            console.error('❌ Error fetching ride:', fetchError);
+            return false;
+        }
+
+        const newSeats = ride.available_seats + seatsToRestore;
+
+        const { error: updateError } = await supabase
+            .from('rides')
+            .update({ available_seats: newSeats })
+            .eq('id', rideId);
+
+        if (updateError) {
+            console.error('❌ Error restoring seats:', updateError);
+            return false;
+        }
+
+        console.log(`✅ Seats restored: ${ride.available_seats} → ${newSeats}`);
+        return true;
+    } catch (error) {
+        console.error('💥 Failed to restore ride seats:', error);
+        return false;
+    }
+};

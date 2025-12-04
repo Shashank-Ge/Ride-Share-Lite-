@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -6,8 +6,12 @@ import {
     ScrollView,
     TouchableOpacity,
     Image,
+    Modal,
+    Alert,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { useAuth } from '../../context/AuthContext';
+import { createBooking, updateRideSeats } from '../../services/database';
 
 interface RouteParams {
     rideId: number;
@@ -26,7 +30,13 @@ interface RouteParams {
 const RideDetailsScreen = () => {
     const route = useRoute();
     const navigation = useNavigation();
+    const { session } = useAuth();
     const params = route.params as RouteParams || {};
+
+    // Booking state
+    const [showBookingModal, setShowBookingModal] = useState(false);
+    const [selectedSeats, setSelectedSeats] = useState(1);
+    const [isBooking, setIsBooking] = useState(false);
 
     // Sample ride details - will be fetched from Supabase later
     const rideDetails = {
@@ -80,9 +90,58 @@ const RideDetailsScreen = () => {
     };
 
     const handleBookRide = () => {
-        console.log('Booking ride:', rideDetails.id);
-        alert(`Booking ride from ${rideDetails.from} to ${rideDetails.to} for ₹${rideDetails.price}`);
-        // TODO: Navigate to booking confirmation screen
+        // Check if user is logged in
+        if (!session?.user?.id) {
+            Alert.alert('Login Required', 'Please login to book a ride');
+            return;
+        }
+
+        // Show booking modal
+        setShowBookingModal(true);
+    };
+
+    const confirmBooking = async () => {
+        setIsBooking(true);
+        try {
+            const totalPrice = rideDetails.price * selectedSeats;
+            const bookingStatus = rideDetails.instant ? 'confirmed' : 'pending';
+
+            // Create booking
+            const booking = await createBooking({
+                ride_id: String(rideDetails.id),
+                passenger_id: session?.user?.id || '',
+                seats_booked: selectedSeats,
+                total_price: totalPrice,
+                status: bookingStatus,
+            });
+
+            if (booking) {
+                // Update available seats if instant booking
+                if (rideDetails.instant) {
+                    await updateRideSeats(String(rideDetails.id), selectedSeats);
+                }
+
+                setShowBookingModal(false);
+                Alert.alert(
+                    'Booking Successful! 🎉',
+                    `Your ${bookingStatus === 'confirmed' ? 'booking is confirmed' : 'booking request has been sent'}!\n\nRoute: ${rideDetails.from} → ${rideDetails.to}\nSeats: ${selectedSeats}\nTotal: ₹${totalPrice}`,
+                    [
+                        {
+                            text: 'View My Bookings',
+                            onPress: () => navigation.navigate('MyRides'),
+                        },
+                        { text: 'OK' },
+                    ]
+                );
+            } else {
+                Alert.alert('Error', 'Failed to create booking. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error creating booking:', error);
+            Alert.alert('Error', 'An error occurred while booking the ride.');
+        } finally {
+            setIsBooking(false);
+        }
     };
 
     return (
@@ -257,6 +316,88 @@ const RideDetailsScreen = () => {
                     </Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Booking Modal */}
+            <Modal
+                visible={showBookingModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowBookingModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Select Seats</Text>
+                        <Text style={styles.modalSubtitle}>
+                            How many seats do you need?
+                        </Text>
+
+                        {/* Seat Selector */}
+                        <View style={styles.seatSelector}>
+                            <TouchableOpacity
+                                style={styles.seatButton}
+                                onPress={() => setSelectedSeats(Math.max(1, selectedSeats - 1))}
+                            >
+                                <Text style={styles.seatButtonText}>−</Text>
+                            </TouchableOpacity>
+                            <Text style={styles.seatCount}>{selectedSeats}</Text>
+                            <TouchableOpacity
+                                style={styles.seatButton}
+                                onPress={() => setSelectedSeats(Math.min(rideDetails.seats, selectedSeats + 1))}
+                            >
+                                <Text style={styles.seatButtonText}>+</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <Text style={styles.availableSeats}>
+                            {rideDetails.seats} seats available
+                        </Text>
+
+                        {/* Price Summary */}
+                        <View style={styles.priceSummary}>
+                            <View style={styles.priceRow}>
+                                <Text style={styles.priceRowLabel}>Price per seat</Text>
+                                <Text style={styles.priceRowValue}>₹{rideDetails.price}</Text>
+                            </View>
+                            <View style={styles.priceRow}>
+                                <Text style={styles.priceRowLabel}>Seats</Text>
+                                <Text style={styles.priceRowValue}>× {selectedSeats}</Text>
+                            </View>
+                            <View style={[styles.priceRow, styles.totalRow]}>
+                                <Text style={styles.totalLabel}>Total</Text>
+                                <Text style={styles.totalValue}>₹{rideDetails.price * selectedSeats}</Text>
+                            </View>
+                        </View>
+
+                        {/* Booking Type Info */}
+                        <View style={styles.bookingTypeInfo}>
+                            <Text style={styles.bookingTypeText}>
+                                {rideDetails.instant
+                                    ? '⚡ Instant booking - Your seat will be confirmed immediately'
+                                    : '📨 Request to book - Driver will review your request'}
+                            </Text>
+                        </View>
+
+                        {/* Action Buttons */}
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity
+                                style={styles.cancelButton}
+                                onPress={() => setShowBookingModal(false)}
+                            >
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.confirmButton, isBooking && styles.confirmButtonDisabled]}
+                                onPress={confirmBooking}
+                                disabled={isBooking}
+                            >
+                                <Text style={styles.confirmButtonText}>
+                                    {isBooking ? 'Booking...' : 'Confirm Booking'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -602,6 +743,146 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: '#fff',
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: 24,
+        paddingBottom: 40,
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 8,
+    },
+    modalSubtitle: {
+        fontSize: 14,
+        color: '#666',
+        marginBottom: 24,
+    },
+    seatSelector: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 20,
+        marginBottom: 12,
+    },
+    seatButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#007AFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    seatButtonText: {
+        fontSize: 28,
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    seatCount: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: '#333',
+        minWidth: 60,
+        textAlign: 'center',
+    },
+    availableSeats: {
+        fontSize: 13,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 24,
+    },
+    priceSummary: {
+        backgroundColor: '#f5f5f5',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+    },
+    priceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    priceRowLabel: {
+        fontSize: 14,
+        color: '#666',
+    },
+    priceRowValue: {
+        fontSize: 14,
+        color: '#333',
+        fontWeight: '600',
+    },
+    totalRow: {
+        borderTopWidth: 1,
+        borderTopColor: '#ddd',
+        paddingTop: 12,
+        marginTop: 4,
+        marginBottom: 0,
+    },
+    totalLabel: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    totalValue: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#007AFF',
+    },
+    bookingTypeInfo: {
+        backgroundColor: '#E3F2FD',
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 24,
+    },
+    bookingTypeText: {
+        fontSize: 13,
+        color: '#1976D2',
+        textAlign: 'center',
+    },
+    modalActions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    cancelButton: {
+        flex: 1,
+        padding: 16,
+        borderRadius: 12,
+        backgroundColor: '#f0f0f0',
+        alignItems: 'center',
+    },
+    cancelButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+    },
+    confirmButton: {
+        flex: 2,
+        padding: 16,
+        borderRadius: 12,
+        backgroundColor: '#34C759',
+        alignItems: 'center',
+    },
+    confirmButtonDisabled: {
+        backgroundColor: '#999',
+        opacity: 0.6,
+    },
+    confirmButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#fff',
+    },
+    locationDotEnd: {
+        backgroundColor: '#34C759',
     },
 });
 
