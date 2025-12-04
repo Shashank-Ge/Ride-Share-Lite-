@@ -6,9 +6,8 @@ import {
     TouchableOpacity,
     ScrollView,
     TextInput,
-    Platform
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import CalendarPicker from '../../components/CalendarPicker';
 
 const HomeScreen = () => {
     const [fromLocation, setFromLocation] = useState('');
@@ -17,11 +16,8 @@ const HomeScreen = () => {
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [passengers, setPassengers] = useState(1);
 
-    const handleDateChange = (event: any, selectedDate?: Date) => {
-        setShowDatePicker(Platform.OS === 'ios');
-        if (selectedDate) {
-            setDate(selectedDate);
-        }
+    const handleDateChange = (selectedDate: Date) => {
+        setDate(selectedDate);
     };
 
     const formatDate = (date: Date) => {
@@ -123,15 +119,13 @@ const HomeScreen = () => {
                     </View>
                 </TouchableOpacity>
 
-                {showDatePicker && (
-                    <DateTimePicker
-                        value={date}
-                        mode="date"
-                        display="default"
-                        onChange={handleDateChange}
-                        minimumDate={new Date()}
-                    />
-                )}
+                <CalendarPicker
+                    visible={showDatePicker}
+                    selectedDate={date}
+                    onSelectDate={handleDateChange}
+                    onClose={() => setShowDatePicker(false)}
+                    minimumDate={new Date()}
+                />
 
                 {/* Passenger Selector */}
                 <View style={styles.inputGroup}>

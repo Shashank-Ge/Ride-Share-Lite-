@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const timeout = setTimeout(() => {
             console.log('Supabase initialization timeout - proceeding without authentication');
             setLoading(false);
-        }, 2000);
+        }, 3000);
 
         // Get initial session
         supabase.auth.getSession()
@@ -40,7 +40,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
         // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log('Auth state changed:', event, 'Session:', !!session);
             setSession(session);
             setUser(session?.user ?? null);
         });
@@ -62,8 +63,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const signOut = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        try {
+            console.log('Signing out...');
+
+            // Clear the session and user state immediately
+            setSession(null);
+            setUser(null);
+
+            // Sign out from Supabase
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                console.error('Sign out error:', error);
+                throw error;
+            }
+
+            console.log('Successfully signed out');
+        } catch (error) {
+            console.error('Sign out failed:', error);
+            throw error;
+        }
     };
 
     const value = {

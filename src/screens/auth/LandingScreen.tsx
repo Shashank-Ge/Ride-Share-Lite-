@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AuthStackNavigationProp } from '../../types/navigation';
 
@@ -8,33 +8,35 @@ const LandingScreen = () => {
 
     return (
         <View style={styles.container}>
-            <View style={styles.content}>
-                <Text style={styles.title}>Welcome to RideShare Lite</Text>
-                <Text style={styles.subtitle}>Share rides, save money, reduce carbon footprint</Text>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <View style={styles.content}>
+                    <Text style={styles.title}>Welcome to RideShare Lite</Text>
+                    <Text style={styles.subtitle}>Share rides, save money, reduce carbon footprint</Text>
 
-                <View style={styles.features}>
-                    <Text style={styles.feature}>🚗 Find rides near you</Text>
-                    <Text style={styles.feature}>💰 Save on travel costs</Text>
-                    <Text style={styles.feature}>🌱 Eco-friendly travel</Text>
-                    <Text style={styles.feature}>👥 Meet new people</Text>
+                    <View style={styles.features}>
+                        <Text style={styles.feature}>🚗 Find rides near you</Text>
+                        <Text style={styles.feature}>💰 Save on travel costs</Text>
+                        <Text style={styles.feature}>🌱 Eco-friendly travel</Text>
+                        <Text style={styles.feature}>👥 Meet new people</Text>
+                    </View>
                 </View>
-            </View>
 
-            <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                    style={styles.primaryButton}
-                    onPress={() => navigation.navigate('Signup')}
-                >
-                    <Text style={styles.primaryButtonText}>Create Account</Text>
-                </TouchableOpacity>
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity
+                        style={styles.primaryButton}
+                        onPress={() => navigation.push('Signup')}
+                    >
+                        <Text style={styles.primaryButtonText}>Create Account</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={styles.secondaryButton}
-                    onPress={() => navigation.navigate('Login')}
-                >
-                    <Text style={styles.secondaryButtonText}>Login</Text>
-                </TouchableOpacity>
-            </View>
+                    <TouchableOpacity
+                        style={styles.secondaryButton}
+                        onPress={() => navigation.push('Login')}
+                    >
+                        <Text style={styles.secondaryButtonText}>Login</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
         </View>
     );
 };
@@ -43,6 +45,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
+    },
+    scrollContent: {
+        flexGrow: 1,
         padding: 20,
     },
     content: {

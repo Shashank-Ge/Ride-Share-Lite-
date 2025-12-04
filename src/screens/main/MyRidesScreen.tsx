@@ -1,13 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
 const MyRidesScreen = () => {
     return (
-        <View style={styles.container}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
             <Text style={styles.title}>My Rides</Text>
             <Text style={styles.subtitle}>Manage your bookings and offers</Text>
             <Text style={styles.placeholder}>My rides functionality coming soon...</Text>
-        </View>
+        </ScrollView>
     );
 };
 
@@ -15,6 +15,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
+    },
+    content: {
+        flex: 1,
         padding: 20,
         justifyContent: 'center',
         alignItems: 'center',

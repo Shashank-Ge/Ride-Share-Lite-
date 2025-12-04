@@ -101,6 +101,33 @@ const TabIcon = ({ name, color }: { name: string; color: string }) => {
     return <Text style={{ fontSize: 24, color }}>{name}</Text>;
 };
 
+// Linking configuration for browser back button support
+const linking = {
+    prefixes: ['http://localhost:8081', 'ridesharelite://'],
+    config: {
+        screens: {
+            Auth: {
+                path: 'auth',
+                screens: {
+                    Landing: '',
+                    Login: 'login',
+                    Signup: 'signup',
+                },
+            },
+            Main: {
+                path: 'app',
+                screens: {
+                    Home: 'home',
+                    Search: 'search',
+                    Publish: 'publish',
+                    MyRides: 'my-rides',
+                    Profile: 'profile',
+                },
+            },
+        },
+    },
+};
+
 // Root Navigator
 const AppNavigator = () => {
     const { session, loading } = useAuth();
@@ -110,7 +137,7 @@ const AppNavigator = () => {
     }
 
     return (
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
                 {!session ? (
                     <RootStack.Screen name="Auth" component={AuthNavigator} />
