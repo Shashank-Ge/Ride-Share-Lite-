@@ -15,6 +15,8 @@ import SearchScreen from '../screens/main/SearchScreen';
 import PublishScreen from '../screens/main/PublishScreen';
 import MyRidesScreen from '../screens/main/MyRidesScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
+import SearchResultsScreen from '../screens/main/SearchResultsScreen';
+import RideDetailsScreen from '../screens/main/RideDetailsScreen';
 
 // Import types
 import { RootStackParamList, AuthStackParamList, MainTabsParamList } from '../types/navigation';
@@ -50,6 +52,29 @@ const MainNavigator = () => {
                 tabBarActiveTintColor: '#007AFF',
                 tabBarInactiveTintColor: '#999',
                 headerShown: false,
+                tabBarStyle: {
+                    paddingBottom: 5,
+                    paddingTop: 5,
+                    height: 60,
+                    backgroundColor: '#fff',
+                    borderTopWidth: 1,
+                    borderTopColor: '#e0e0e0',
+                    width: '100%',
+                },
+                tabBarItemStyle: {
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    paddingHorizontal: 0,
+                },
+                tabBarLabelStyle: {
+                    fontSize: 11,
+                    marginTop: 2,
+                    marginBottom: 0,
+                },
+                tabBarIconStyle: {
+                    marginBottom: 0,
+                },
             }}
         >
             <MainTabs.Screen
@@ -92,6 +117,20 @@ const MainNavigator = () => {
                     tabBarIcon: ({ color }) => <TabIcon name="👤" color={color} />,
                 }}
             />
+            <MainTabs.Screen
+                name="SearchResults"
+                component={SearchResultsScreen}
+                options={{
+                    tabBarButton: () => null, // Hide from tab bar
+                }}
+            />
+            <MainTabs.Screen
+                name="RideDetails"
+                component={RideDetailsScreen}
+                options={{
+                    tabBarButton: () => null, // Hide from tab bar
+                }}
+            />
         </MainTabs.Navigator>
     );
 };
@@ -122,6 +161,8 @@ const linking = {
                     Publish: 'publish',
                     MyRides: 'my-rides',
                     Profile: 'profile',
+                    SearchResults: 'search-results',
+                    RideDetails: 'ride-details',
                 },
             },
         },

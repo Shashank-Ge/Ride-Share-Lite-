@@ -23,6 +23,25 @@ export type MainTabsParamList = {
   Publish: undefined;
   MyRides: undefined;
   Profile: undefined;
+  SearchResults: {
+    from?: string;
+    to?: string;
+    date?: string;
+    passengers?: number;
+  };
+  RideDetails: {
+    rideId: number;
+    from: string;
+    to: string;
+    date: string;
+    departureTime: string;
+    price: number;
+    driver: string;
+    rating: number;
+    seats: number;
+    vehicle: string;
+    instant?: boolean;
+  };
 };
 
 // Navigation Props
