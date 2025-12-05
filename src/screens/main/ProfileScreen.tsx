@@ -3,6 +3,32 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert }
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { fetchProfile, Profile } from '../../services/database';
+import ReviewCard from '../../components/ReviewCard';
+
+// Hardcoded reviews for demonstration
+const MOCK_REVIEWS = [
+    {
+        id: '1',
+        reviewer_name: 'John Doe',
+        rating: 5,
+        review_text: 'Great driver! Very punctual and friendly. Smooth ride all the way.',
+        created_at: '2024-12-01',
+    },
+    {
+        id: '2',
+        reviewer_name: 'Jane Smith',
+        rating: 4,
+        review_text: 'Good experience overall. Would ride again!',
+        created_at: '2024-11-28',
+    },
+    {
+        id: '3',
+        reviewer_name: 'Mike Johnson',
+        rating: 5,
+        review_text: 'Excellent! Clean car and safe driving.',
+        created_at: '2024-11-25',
+    },
+];
 
 const ProfileScreen = () => {
     const { user, signOut } = useAuth();
@@ -112,6 +138,18 @@ const ProfileScreen = () => {
                     </TouchableOpacity>
                 </View>
 
+                {/* Reviews Section */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Reviews ({MOCK_REVIEWS.length})</Text>
+                    <View style={styles.ratingOverview}>
+                        <Text style={styles.averageRating}>4.7 ⭐</Text>
+                        <Text style={styles.ratingSubtext}>Based on {MOCK_REVIEWS.length} reviews</Text>
+                    </View>
+                    {MOCK_REVIEWS.map(review => (
+                        <ReviewCard key={review.id} {...review} />
+                    ))}
+                </View>
+
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Text style={styles.logoutText}>Logout</Text>
                 </TouchableOpacity>
@@ -134,8 +172,11 @@ const styles = StyleSheet.create({
     menuText: { fontSize: 16, color: '#333' },
     menuArrow: { fontSize: 24, color: '#ccc' },
     menuSubtext: { fontSize: 12, color: '#999', fontStyle: 'italic' },
-    logoutButton: { backgroundColor: '#fff', marginTop: 20, padding: 16, alignItems: 'center' },
-    logoutText: { fontSize: 16, color: '#FF3B30', fontWeight: '600' },
+    ratingOverview: { alignItems: 'center', marginBottom: 16, paddingVertical: 12, backgroundColor: '#f5f5f5', borderRadius: 8 },
+    averageRating: { fontSize: 32, fontWeight: 'bold', color: '#333', marginBottom: 4 },
+    ratingSubtext: { fontSize: 14, color: '#666' },
+    logoutButton: { backgroundColor: '#FF3B30', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 20 },
+    logoutText: { fontSize: 16, color: '#fff', fontWeight: '600' },
 });
 
 export default ProfileScreen;

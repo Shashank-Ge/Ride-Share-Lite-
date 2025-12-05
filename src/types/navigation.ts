@@ -46,6 +46,19 @@ export type MainTabsParamList = {
   Verification: undefined;
   Notifications: undefined;
   Privacy: undefined;
+  ChatList: undefined;
+  Chat: {
+    bookingId: string;
+    otherUser: {
+      id: string;
+      full_name: string;
+      avatar_url?: string;
+    };
+    ride: {
+      from_location: string;
+      to_location: string;
+    };
+  };
 };
 
 // Navigation Props

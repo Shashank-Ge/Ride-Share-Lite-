@@ -8,6 +8,7 @@ import {
     RefreshControl,
     Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import {
     fetchPassengerBookings,
@@ -16,9 +17,11 @@ import {
     restoreRideSeats,
     Booking,
 } from '../../services/database';
+import { sendBookingConfirmationNotification, sendBookingRejectedNotification } from '../../services/notifications';
 
 const MyRidesScreen = () => {
     const { session } = useAuth();
+    const navigation = useNavigation();
     const [activeTab, setActiveTab] = useState<'bookings' | 'rides'>('bookings');
     const [passengerBookings, setPassengerBookings] = useState<Booking[]>([]);
     const [driverBookings, setDriverBookings] = useState<Booking[]>([]);
@@ -64,6 +67,15 @@ const MyRidesScreen = () => {
                     onPress: async () => {
                         const result = await updateBookingStatus(booking.id, 'confirmed');
                         if (result) {
+                            // Send notification to passenger
+                            const ride = booking.ride as any;
+                            await sendBookingConfirmationNotification({
+                                from: ride?.from_location || '',
+                                to: ride?.to_location || '',
+                                date: ride?.departure_date || '',
+                                time: ride?.departure_time || '',
+                            });
+
                             Alert.alert('Success', 'Booking accepted!');
                             loadData();
                         }
@@ -85,6 +97,14 @@ const MyRidesScreen = () => {
                     onPress: async () => {
                         const result = await updateBookingStatus(booking.id, 'rejected');
                         if (result) {
+                            // Send notification to passenger
+                            const ride = booking.ride as any;
+                            await sendBookingRejectedNotification({
+                                from: ride?.from_location || '',
+                                to: ride?.to_location || '',
+                                date: ride?.departure_date || '',
+                            });
+
                             Alert.alert('Booking Rejected', 'The passenger has been notified.');
                             loadData();
                         }
@@ -172,6 +192,19 @@ const MyRidesScreen = () => {
                         <Text style={styles.cancelButtonText}>Cancel Booking</Text>
                     </TouchableOpacity>
                 )}
+
+                {booking.status === 'confirmed' && (
+                    <TouchableOpacity
+                        style={styles.messageButton}
+                        onPress={() => (navigation as any).navigate('Chat', {
+                            bookingId: booking.id,
+                            otherUser: ride?.driver,
+                            ride: ride,
+                        })}
+                    >
+                        <Text style={styles.messageButtonText}>💬 Message Driver</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         );
     };
@@ -226,6 +259,19 @@ const MyRidesScreen = () => {
                             <Text style={styles.acceptButtonText}>Accept</Text>
                         </TouchableOpacity>
                     </View>
+                )}
+
+                {booking.status === 'confirmed' && (
+                    <TouchableOpacity
+                        style={styles.messageButton}
+                        onPress={() => (navigation as any).navigate('Chat', {
+                            bookingId: booking.id,
+                            otherUser: booking.passenger,
+                            ride: ride,
+                        })}
+                    >
+                        <Text style={styles.messageButtonText}>💬 Message Passenger</Text>
+                    </TouchableOpacity>
                 )}
             </View>
         );
@@ -320,6 +366,8 @@ const styles = StyleSheet.create({
     acceptButtonText: { fontSize: 14, fontWeight: '600', color: '#fff' },
     cancelButton: { padding: 12, borderRadius: 8, backgroundColor: '#f0f0f0', alignItems: 'center' },
     cancelButtonText: { fontSize: 14, fontWeight: '600', color: '#FF3B30' },
+    messageButton: { padding: 12, borderRadius: 8, backgroundColor: '#007AFF', alignItems: 'center', marginTop: 8 },
+    messageButtonText: { fontSize: 14, fontWeight: '600', color: '#fff' },
     emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 },
     emptyIcon: { fontSize: 64, marginBottom: 16 },
     emptyTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 8 },

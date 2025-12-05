@@ -21,6 +21,8 @@ import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import VerificationScreen from '../screens/profile/VerificationScreen';
 import NotificationsScreen from '../screens/profile/NotificationsScreen';
 import PrivacyScreen from '../screens/profile/PrivacyScreen';
+import ChatListScreen from '../screens/chat/ChatListScreen';
+import ChatScreen from '../screens/chat/ChatScreen';
 
 // Import types
 import { RootStackParamList, AuthStackParamList, MainTabsParamList } from '../types/navigation';
@@ -159,6 +161,20 @@ const MainNavigator = () => {
             <MainTabs.Screen
                 name="Privacy"
                 component={PrivacyScreen}
+                options={{
+                    tabBarButton: () => null, // Hide from tab bar
+                }}
+            />
+            <MainTabs.Screen
+                name="ChatList"
+                component={ChatListScreen}
+                options={{
+                    tabBarButton: () => null, // Hide from tab bar
+                }}
+            />
+            <MainTabs.Screen
+                name="Chat"
+                component={ChatScreen}
                 options={{
                     tabBarButton: () => null, // Hide from tab bar
                 }}

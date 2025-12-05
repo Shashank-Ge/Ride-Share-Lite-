@@ -541,3 +541,214 @@ export const restoreRideSeats = async (
         return false;
     }
 };
+
+// ============================================
+// CHAT FUNCTIONS
+// ============================================
+
+export interface Message {
+    id: string;
+    booking_id: string;
+    sender_id: string;
+    receiver_id: string;
+    message: string;
+    image_url?: string;
+    read: boolean;
+    created_at: string;
+    sender?: Profile;
+    receiver?: Profile;
+}
+
+export interface Conversation {
+    booking_id: string;
+    other_user: Profile;
+    last_message: string;
+    last_message_time: string;
+    unread_count: number;
+    ride?: Ride;
+}
+
+/**
+ * Send a message
+ */
+export const sendMessage = async (messageData: {
+    booking_id: string;
+    sender_id: string;
+    receiver_id: string;
+    message: string;
+    image_url?: string;
+}): Promise<Message | null> => {
+    try {
+        console.log('💬 Sending message:', messageData);
+
+        const { data, error } = await supabase
+            .from('messages')
+            .insert([messageData])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('❌ Error sending message:', error);
+            throw error;
+        }
+
+        console.log('✅ Message sent successfully');
+        return data;
+    } catch (error) {
+        console.error('💥 Failed to send message:', error);
+        return null;
+    }
+};
+
+/**
+ * Fetch messages for a booking
+ */
+export const fetchMessages = async (bookingId: string): Promise<Message[]> => {
+    try {
+        console.log('📨 Fetching messages for booking:', bookingId);
+
+        const { data, error } = await supabase
+            .from('messages')
+            .select(`
+                *,
+                sender:profiles!sender_id (
+                    id,
+                    full_name,
+                    avatar_url
+                ),
+                receiver:profiles!receiver_id (
+                    id,
+                    full_name,
+                    avatar_url
+                )
+            `)
+            .eq('booking_id', bookingId)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('❌ Error fetching messages:', error);
+            throw error;
+        }
+
+        console.log(`✅ Found ${data?.length || 0} messages`);
+        return data || [];
+    } catch (error) {
+        console.error('💥 Failed to fetch messages:', error);
+        return [];
+    }
+};
+
+/**
+ * Mark messages as read
+ */
+export const markMessagesAsRead = async (
+    bookingId: string,
+    userId: string
+): Promise<boolean> => {
+    try {
+        console.log(`📖 Marking messages as read for booking ${bookingId}`);
+
+        const { error } = await supabase
+            .from('messages')
+            .update({ read: true })
+            .eq('booking_id', bookingId)
+            .eq('receiver_id', userId)
+            .eq('read', false);
+
+        if (error) {
+            console.error('❌ Error marking messages as read:', error);
+            return false;
+        }
+
+        console.log('✅ Messages marked as read');
+        return true;
+    } catch (error) {
+        console.error('💥 Failed to mark messages as read:', error);
+        return false;
+    }
+};
+
+/**
+ * Fetch all conversations for a user
+ */
+export const fetchConversations = async (userId: string): Promise<Conversation[]> => {
+    try {
+        console.log('💬 Fetching conversations for user:', userId);
+
+        // Get all bookings where user is either passenger or driver
+        const { data: bookings, error } = await supabase
+            .from('bookings')
+            .select(`
+                *,
+                ride:rides (
+                    *,
+                    driver:profiles!driver_id (
+                        id,
+                        full_name,
+                        avatar_url
+                    )
+                ),
+                passenger:profiles!passenger_id (
+                    id,
+                    full_name,
+                    avatar_url
+                )
+            `)
+            .or(`passenger_id.eq.${userId},ride.driver_id.eq.${userId}`)
+            .eq('status', 'confirmed');
+
+        if (error) {
+            console.error('❌ Error fetching conversations:', error);
+            return [];
+        }
+
+        // For each booking, get the last message and unread count
+        const conversations: Conversation[] = [];
+
+        for (const booking of bookings || []) {
+            const ride = booking.ride as any;
+            const isDriver = ride?.driver_id === userId;
+            const otherUser = isDriver ? booking.passenger : ride?.driver;
+
+            if (!otherUser) continue;
+
+            // Get last message
+            const { data: lastMsg } = await supabase
+                .from('messages')
+                .select('message, created_at')
+                .eq('booking_id', booking.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            // Get unread count
+            const { count } = await supabase
+                .from('messages')
+                .select('*', { count: 'exact', head: true })
+                .eq('booking_id', booking.id)
+                .eq('receiver_id', userId)
+                .eq('read', false);
+
+            conversations.push({
+                booking_id: booking.id,
+                other_user: otherUser,
+                last_message: lastMsg?.message || 'No messages yet',
+                last_message_time: lastMsg?.created_at || booking.created_at,
+                unread_count: count || 0,
+                ride: ride,
+            });
+        }
+
+        // Sort by last message time
+        conversations.sort((a, b) =>
+            new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime()
+        );
+
+        console.log(`✅ Found ${conversations.length} conversations`);
+        return conversations;
+    } catch (error) {
+        console.error('💥 Failed to fetch conversations:', error);
+        return [];
+    }
+};
+
