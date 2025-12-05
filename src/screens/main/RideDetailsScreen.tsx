@@ -12,6 +12,8 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { createBooking, updateRideSeats } from '../../services/database';
+import MapView from '../../components/maps/MapView';
+import { sendBookingConfirmationNotification, scheduleRideReminder } from '../../services/notifications';
 
 interface RouteParams {
     rideId: number;
@@ -121,6 +123,24 @@ const RideDetailsScreen = () => {
                     await updateRideSeats(String(rideDetails.id), selectedSeats);
                 }
 
+                // Send notifications
+                await sendBookingConfirmationNotification({
+                    from: rideDetails.from,
+                    to: rideDetails.to,
+                    date: rideDetails.date,
+                    time: rideDetails.departureTime,
+                });
+
+                // Schedule ride reminder (1 hour before departure)
+                if (bookingStatus === 'confirmed') {
+                    await scheduleRideReminder(
+                        rideDetails.from,
+                        rideDetails.to,
+                        rideDetails.date,
+                        rideDetails.departureTime
+                    );
+                }
+
                 setShowBookingModal(false);
                 Alert.alert(
                     'Booking Successful! 🎉',
@@ -176,6 +196,15 @@ const RideDetailsScreen = () => {
                             <Text style={styles.instantText}>⚡ Instant Booking</Text>
                         </View>
                     )}
+                </View>
+
+                {/* Route Map */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Route</Text>
+                    <MapView
+                        fromLocation={rideDetails.from}
+                        toLocation={rideDetails.to}
+                    />
                 </View>
 
                 {/* Driver Section */}

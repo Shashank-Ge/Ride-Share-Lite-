@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { MainTabsNavigationProp } from '../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { createRide, searchRides } from '../../services/database';
+import { fetchRoute, geocodePlace } from '../../services/routing';
 import CalendarPicker from '../../components/CalendarPicker';
 
 interface PublishRideForm {
@@ -171,6 +172,41 @@ const PublishScreen = () => {
                 return;
             }
 
+            // Fetch route data from OpenRouteService
+            console.log('🗺️ Fetching route data...');
+            let routeGeometry = null;
+            let routeDistance = null;
+            let routeDuration = null;
+            let dynamicStopovers: string[] = [];
+
+            try {
+                // Geocode locations
+                const fromCoords = await geocodePlace(formData.fromLocation);
+                const toCoords = await geocodePlace(formData.toLocation);
+
+                if (fromCoords && toCoords) {
+                    // Fetch route
+                    const routeData = await fetchRoute(fromCoords, toCoords);
+
+                    if (routeData) {
+                        routeGeometry = routeData.geometry;
+                        routeDistance = routeData.distance;
+                        routeDuration = routeData.duration;
+                        dynamicStopovers = routeData.stopovers;
+                        console.log('✅ Route fetched:', {
+                            distance: `${(routeDistance / 1000).toFixed(1)} km`,
+                            duration: `${Math.round(routeDuration / 60)} min`,
+                            stopovers: dynamicStopovers,
+                        });
+                    }
+                } else {
+                    console.warn('⚠️ Could not geocode locations, proceeding without route data');
+                }
+            } catch (error) {
+                console.error('❌ Error fetching route:', error);
+                // Continue without route data - not critical
+            }
+
             const rideData = {
                 driver_id: session?.user?.id || '',
                 from_location: formData.fromLocation,
@@ -183,6 +219,10 @@ const PublishScreen = () => {
                 vehicle_make: formData.vehicleMake,
                 vehicle_model: formData.vehicleModel,
                 vehicle_color: formData.vehicleColor,
+                route_geometry: routeGeometry,
+                route_distance: routeDistance,
+                route_duration: routeDuration,
+                stopovers: dynamicStopovers.length > 0 ? dynamicStopovers : formData.stopovers,
             };
 
             console.log('💾 Creating ride:', rideData);
