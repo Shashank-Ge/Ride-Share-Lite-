@@ -138,7 +138,7 @@ const SearchResultsScreen = () => {
     const handleRidePress = (ride: Ride) => {
         console.log('Ride selected:', ride);
         navigation.navigate('RideDetails', {
-            rideId: parseInt(ride.id) || 1,
+            rideId: ride.id, // Pass UUID string directly, don't parse!
             from: ride.from,
             to: ride.to,
             date: ride.date,

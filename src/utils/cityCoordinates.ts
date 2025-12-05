@@ -64,6 +64,40 @@ export const CITY_COORDINATES: Record<string, { latitude: number; longitude: num
     'kota': { latitude: 25.2138, longitude: 75.8648 },
     'ajmer': { latitude: 26.4499, longitude: 74.6399 },
     'bikaner': { latitude: 28.0229, longitude: 73.3119 },
+
+    // All State Capitals (28 States)
+    // 'mumbai': { latitude: 19.0760, longitude: 72.8777 }, // Maharashtra (already exists above)
+    'gandhinagar': { latitude: 23.2156, longitude: 72.6369 }, // Gujarat
+    'raipur': { latitude: 21.2514, longitude: 81.6296 }, // Chhattisgarh
+    'ranchi': { latitude: 23.3441, longitude: 85.3096 }, // Jharkhand
+    'bhubaneswar': { latitude: 20.2961, longitude: 85.8245 }, // Odisha
+    'thiruvananthapuram': { latitude: 8.5241, longitude: 76.9366 }, // Kerala
+    'trivandrum': { latitude: 8.5241, longitude: 76.9366 }, // Kerala (alternate name)
+    'amaravati': { latitude: 16.5062, longitude: 80.6480 }, // Andhra Pradesh
+    'guwahati': { latitude: 26.1445, longitude: 91.7362 }, // Assam (de facto capital)
+    'dispur': { latitude: 26.1433, longitude: 91.7898 }, // Assam (official capital)
+    'imphal': { latitude: 24.8170, longitude: 93.9368 }, // Manipur
+    'shillong': { latitude: 25.5788, longitude: 91.8933 }, // Meghalaya
+    'aizawl': { latitude: 23.7307, longitude: 92.7173 }, // Mizoram
+    'kohima': { latitude: 25.6747, longitude: 94.1086 }, // Nagaland
+    'gangtok': { latitude: 27.3389, longitude: 88.6065 }, // Sikkim
+    'agartala': { latitude: 23.8315, longitude: 91.2868 }, // Tripura
+    'itanagar': { latitude: 27.0844, longitude: 93.6053 }, // Arunachal Pradesh
+    // 'shimla': { latitude: 31.1048, longitude: 77.1734 }, // Himachal Pradesh (already exists above)
+    'jammu': { latitude: 32.7266, longitude: 74.8570 }, // Jammu & Kashmir (winter capital)
+    'srinagar': { latitude: 34.0837, longitude: 74.7973 }, // Jammu & Kashmir (summer capital)
+    'panaji': { latitude: 15.4909, longitude: 73.8278 }, // Goa
+    'panjim': { latitude: 15.4909, longitude: 73.8278 }, // Goa (alternate name)
+
+    // Union Territory Capitals
+    'port blair': { latitude: 11.6234, longitude: 92.7265 }, // Andaman & Nicobar
+    'silvassa': { latitude: 20.2737, longitude: 72.9960 }, // Dadra & Nagar Haveli and Daman & Diu
+    'daman': { latitude: 20.4140, longitude: 72.8328 }, // Daman & Diu
+    'kavaratti': { latitude: 10.5667, longitude: 72.6420 }, // Lakshadweep
+    'puducherry': { latitude: 11.9416, longitude: 79.8083 }, // Puducherry
+    'pondicherry': { latitude: 11.9416, longitude: 79.8083 }, // Puducherry (alternate name)
+    'ladakh': { latitude: 34.1526, longitude: 77.5771 }, // Ladakh (Leh)
+    'leh': { latitude: 34.1526, longitude: 77.5771 }, // Ladakh
 };
 
 /**

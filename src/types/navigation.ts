@@ -30,7 +30,7 @@ export type MainTabsParamList = {
     passengers?: number;
   };
   RideDetails: {
-    rideId: number;
+    rideId: string; // UUID from database
     from: string;
     to: string;
     date: string;

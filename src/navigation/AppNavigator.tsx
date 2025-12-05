@@ -68,13 +68,11 @@ const MainNavigator = () => {
                     backgroundColor: theme.colors.surface,
                     borderTopWidth: 1,
                     borderTopColor: theme.colors.border,
-                    width: '100%',
                 },
                 tabBarItemStyle: {
                     flex: 1,
                     justifyContent: 'center',
                     alignItems: 'center',
-                    paddingHorizontal: 0,
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,

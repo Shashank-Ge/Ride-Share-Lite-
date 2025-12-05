@@ -189,10 +189,25 @@ const RideDetailsScreen = () => {
     const confirmBooking = async () => {
         setIsBooking(true);
         try {
+            console.log('🎫 Starting booking process...');
+            console.log('Ride ID:', rideDetails.id);
+            console.log('User ID:', session?.user?.id);
+            console.log('Selected seats:', selectedSeats);
+
             const totalPrice = rideDetails.price * selectedSeats;
             const bookingStatus = rideDetails.instant ? 'confirmed' : 'pending';
 
+            // Validate ride ID
+            if (!rideDetails.id || rideDetails.id === 1) {
+                Alert.alert(
+                    'Invalid Ride',
+                    'This ride cannot be booked. Please select a ride from the search results.'
+                );
+                return;
+            }
+
             // Create booking
+            console.log('📝 Creating booking in database...');
             const booking = await createBooking({
                 ride_id: String(rideDetails.id),
                 passenger_id: session?.user?.id || '',
@@ -201,31 +216,46 @@ const RideDetailsScreen = () => {
                 status: bookingStatus,
             });
 
+            console.log('Booking result:', booking);
+
             if (booking) {
-                // Update available seats if instant booking
-                if (rideDetails.instant) {
-                    await updateRideSeats(String(rideDetails.id), selectedSeats);
-                }
+                // Update available seats for ALL bookings
+                console.log('🪑 Updating available seats...');
+                const seatsUpdated = await updateRideSeats(String(rideDetails.id), selectedSeats);
+                console.log('Seats updated:', seatsUpdated);
 
                 // Send notifications
-                await sendBookingConfirmationNotification({
-                    from: rideDetails.from,
-                    to: rideDetails.to,
-                    date: rideDetails.date,
-                    time: rideDetails.departureTime,
-                });
+                try {
+                    await sendBookingConfirmationNotification({
+                        from: rideDetails.from,
+                        to: rideDetails.to,
+                        date: rideDetails.date,
+                        time: rideDetails.departureTime,
+                    });
+                } catch (notifError) {
+                    console.log('Notification error (non-critical):', notifError);
+                }
 
                 // Schedule ride reminder (1 hour before departure)
                 if (bookingStatus === 'confirmed') {
-                    await scheduleRideReminder(
-                        rideDetails.from,
-                        rideDetails.to,
-                        rideDetails.date,
-                        rideDetails.departureTime
-                    );
+                    try {
+                        // Create a Date object for the ride (simplified - using today's date with departure time)
+                        const rideDateObj = new Date();
+                        await scheduleRideReminder(
+                            {
+                                from: rideDetails.from,
+                                to: rideDetails.to,
+                                departureTime: rideDetails.departureTime,
+                            },
+                            rideDateObj
+                        );
+                    } catch (reminderError) {
+                        console.log('Reminder scheduling error (non-critical):', reminderError);
+                    }
                 }
 
                 setShowBookingModal(false);
+                console.log('✅ Booking successful!');
                 Alert.alert(
                     'Booking Successful! 🎉',
                     `Your ${bookingStatus === 'confirmed' ? 'booking is confirmed' : 'booking request has been sent'}!\n\nRoute: ${rideDetails.from} → ${rideDetails.to}\nSeats: ${selectedSeats}\nTotal: ₹${totalPrice}`,
@@ -238,11 +268,15 @@ const RideDetailsScreen = () => {
                     ]
                 );
             } else {
+                console.error('❌ Booking creation failed - no booking returned');
                 Alert.alert('Error', 'Failed to create booking. Please try again.');
             }
         } catch (error) {
-            console.error('Error creating booking:', error);
-            Alert.alert('Error', 'An error occurred while booking the ride.');
+            console.error('💥 Error creating booking:', error);
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            Alert.alert('Error', `An error occurred while booking the ride. Check console for details.`);
+        } finally {
+            setIsBooking(false);
         }
     };
 
@@ -346,6 +380,7 @@ const RideDetailsScreen = () => {
         preferenceIcon: { fontSize: 16, marginRight: 6 },
         preferenceText: { fontSize: 13, color: theme.colors.textSecondary },
         vehicleRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+        vehicleText: { fontSize: 14, color: theme.colors.text, marginBottom: 4 },
         locationDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: theme.colors.primary, marginTop: 4, marginRight: 12 },
         locationDotEnd: { backgroundColor: theme.colors.success },
         stopovers: { marginLeft: 24, marginBottom: 16, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: theme.colors.border },
@@ -369,7 +404,18 @@ const RideDetailsScreen = () => {
         bookingTypeInfo: { backgroundColor: theme.colors.primary + '10', padding: 12, borderRadius: 8, marginBottom: 24 },
         bookingTypeText: { fontSize: 13, color: theme.colors.text, textAlign: 'center' },
         modalActions: { flexDirection: 'row', gap: 12 },
+        cancelButton: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
+        cancelButtonText: { fontSize: 16, fontWeight: '600', color: theme.colors.text },
+        confirmButton: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center', backgroundColor: theme.colors.primary },
+        confirmButtonText: { fontSize: 16, fontWeight: 'bold', color: '#fff' },
         confirmButtonDisabled: { opacity: 0.5 },
+        modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+        modalContent: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 },
+        modalTitle: { fontSize: 24, fontWeight: 'bold', color: theme.colors.text, marginBottom: 8, textAlign: 'center' },
+        seatButton: { width: 48, height: 48, borderRadius: 24, backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' },
+        seatButtonText: { fontSize: 24, color: '#fff', fontWeight: 'bold' },
+        totalRow: { borderTopWidth: 1, borderTopColor: theme.colors.border, paddingTop: 12, marginTop: 4 },
+        totalLabel: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text },
     });
 
     return (
@@ -477,16 +523,16 @@ const RideDetailsScreen = () => {
                     <Text style={styles.sectionTitle}>Vehicle</Text>
                     <View style={styles.vehicleCard}>
                         <View style={styles.vehicleRow}>
-                            <Text style={styles.vehicleInfo}>🚗 {rideDetails.vehicle.make}</Text>
-                            <Text style={styles.vehicleInfo}>🎨 {rideDetails.vehicle.color}</Text>
+                            <Text style={styles.vehicleText}>🚗 {rideDetails.vehicle.make}</Text>
+                            <Text style={styles.vehicleText}>🎨 {rideDetails.vehicle.color}</Text>
                         </View>
                         <View style={styles.vehicleRow}>
-                            <Text style={styles.vehicleInfo}>📅 {rideDetails.vehicle.year}</Text>
-                            <Text style={styles.vehicleInfo}>
+                            <Text style={styles.vehicleText}>📅 {rideDetails.vehicle.year}</Text>
+                            <Text style={styles.vehicleText}>
                                 {rideDetails.vehicle.ac ? '❄️ AC' : '🌡️ Non-AC'}
                             </Text>
                         </View>
-                        <Text style={styles.vehicleInfo}>🧳 Luggage: {rideDetails.vehicle.luggage}</Text>
+                        <Text style={styles.vehicleText}>🧳 Luggage: {rideDetails.vehicle.luggage}</Text>
                     </View>
                 </View>
 

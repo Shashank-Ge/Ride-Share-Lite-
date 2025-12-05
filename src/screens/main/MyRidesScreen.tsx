@@ -7,6 +7,7 @@ import {
     TouchableOpacity,
     RefreshControl,
     Alert,
+    Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,9 +16,11 @@ import { useTheme } from '../../context/ThemeContext';
 import {
     fetchPassengerBookings,
     fetchDriverBookings,
+    fetchDriverRides,
     updateBookingStatus,
     restoreRideSeats,
     Booking,
+    Ride,
 } from '../../services/database';
 import { sendBookingConfirmationNotification, sendBookingRejectedNotification } from '../../services/notifications';
 import GlassCard from '../../components/GlassCard';
@@ -26,9 +29,10 @@ const MyRidesScreen = () => {
     const { session } = useAuth();
     const navigation = useNavigation();
     const { theme } = useTheme();
-    const [activeTab, setActiveTab] = useState<'bookings' | 'rides'>('bookings');
+    const [activeTab, setActiveTab] = useState<'bookings' | 'rides' | 'requests'>('bookings');
     const [passengerBookings, setPassengerBookings] = useState<Booking[]>([]);
     const [driverBookings, setDriverBookings] = useState<Booking[]>([]);
+    const [driverRides, setDriverRides] = useState<Ride[]>([]); // Published rides
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -37,18 +41,34 @@ const MyRidesScreen = () => {
     }, [activeTab]);
 
     const loadData = async () => {
-        if (!session?.user?.id) return;
+        if (!session?.user?.id) {
+            console.log('❌ No user session found in MyRidesScreen');
+            return;
+        }
+
+        console.log('📋 Loading MyRides data...');
+        console.log('User ID:', session.user.id);
+        console.log('Active tab:', activeTab);
 
         try {
             if (activeTab === 'bookings') {
+                console.log('Fetching passenger bookings...');
                 const bookings = await fetchPassengerBookings(session.user.id);
+                console.log('Passenger bookings received:', bookings.length);
                 setPassengerBookings(bookings);
+            } else if (activeTab === 'rides') {
+                console.log('Fetching driver published rides...');
+                const rides = await fetchDriverRides(session.user.id);
+                console.log('Driver rides received:', rides.length);
+                setDriverRides(rides);
             } else {
+                console.log('Fetching driver booking requests...');
                 const bookings = await fetchDriverBookings(session.user.id);
+                console.log('Driver booking requests received:', bookings.length);
                 setDriverBookings(bookings);
             }
         } catch (error) {
-            console.error('Error loading data:', error);
+            console.error('💥 Error loading MyRides data:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -68,20 +88,33 @@ const MyRidesScreen = () => {
                 { text: 'Cancel', style: 'cancel' },
                 {
                     text: 'Accept',
+                    style: 'default',
                     onPress: async () => {
-                        const result = await updateBookingStatus(booking.id, 'confirmed');
-                        if (result) {
-                            // Send notification to passenger
-                            const ride = booking.ride as any;
-                            await sendBookingConfirmationNotification({
-                                from: ride?.from_location || '',
-                                to: ride?.to_location || '',
-                                date: ride?.departure_date || '',
-                                time: ride?.departure_time || '',
-                            });
+                        try {
+                            const result = await updateBookingStatus(booking.id, 'confirmed');
 
-                            Alert.alert('Success', 'Booking accepted!');
-                            loadData();
+                            if (result) {
+                                const ride = booking.ride as any;
+
+                                try {
+                                    await sendBookingConfirmationNotification({
+                                        from: ride?.from_location || '',
+                                        to: ride?.to_location || '',
+                                        date: ride?.departure_date || '',
+                                        time: ride?.departure_time || '',
+                                    });
+                                } catch (notifError) {
+                                    console.log('Notification error:', notifError);
+                                }
+
+                                Alert.alert('Success', 'Booking accepted successfully!');
+                                loadData();
+                            } else {
+                                Alert.alert('Error', 'Failed to accept booking.');
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            Alert.alert('Error', 'An error occurred.');
                         }
                     },
                 },
@@ -257,11 +290,16 @@ const MyRidesScreen = () => {
                             <Text style={styles.rejectButtonText}>Reject</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={styles.acceptButton}
-                            onPress={() => handleAcceptBooking(booking)}
+                            style={styles.acceptButtonWrapper}
+                            onPress={() => {
+                                console.log('🔴 ACCEPT BUTTON CLICKED!');
+                                handleAcceptBooking(booking);
+                            }}
                         >
                             <LinearGradient
-                                colors={theme.gradients.success as any}
+                                colors={theme.gradients.primary as any}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
                                 style={styles.acceptButton}
                             >
                                 <Text style={styles.acceptButtonText}>Accept</Text>
@@ -291,6 +329,62 @@ const MyRidesScreen = () => {
         );
     };
 
+    const renderPublishedRide = (ride: Ride) => {
+        return (
+            <GlassCard key={ride.id} style={styles.bookingCard} intensity="light">
+                <View style={styles.cardHeader}>
+                    <View style={styles.routeInfo}>
+                        <Text style={styles.route}>
+                            {ride.from_location} → {ride.to_location}
+                        </Text>
+                        <Text style={styles.dateTime}>
+                            {new Date(ride.departure_date).toLocaleDateString()} • {ride.departure_time}
+                        </Text>
+                    </View>
+                    <View style={[styles.statusBadge, { backgroundColor: ride.status === 'active' ? '#34C759' : '#999' }]}>
+                        <Text style={styles.statusText}>
+                            {ride.status === 'active' ? '✓ Active' : '⊘ Inactive'}
+                        </Text>
+                    </View>
+                </View>
+
+                <View style={styles.cardDetails}>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Available Seats</Text>
+                        <Text style={styles.detailValue}>{ride.available_seats}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Price per Seat</Text>
+                        <Text style={styles.priceValue}>₹{ride.price_per_seat}</Text>
+                    </View>
+                    <View style={styles.detailRow}>
+                        <Text style={styles.detailLabel}>Booking Type</Text>
+                        <Text style={styles.detailValue}>
+                            {ride.instant_booking ? '⚡ Instant' : '📨 Request'}
+                        </Text>
+                    </View>
+                </View>
+
+                <TouchableOpacity
+                    style={styles.viewDetailsButton}
+                    onPress={() => (navigation as any).navigate('RideDetails', {
+                        rideId: ride.id,
+                        from: ride.from_location,
+                        to: ride.to_location,
+                        date: new Date(ride.departure_date).toLocaleDateString(),
+                        departureTime: ride.departure_time,
+                        price: ride.price_per_seat,
+                        seats: ride.available_seats,
+                        instant: ride.instant_booking,
+                    })}
+                >
+                    <Text style={styles.viewDetailsButtonText}>View Details</Text>
+                </TouchableOpacity>
+            </GlassCard>
+        );
+    };
+
+
     const styles = StyleSheet.create({
         container: { flex: 1, backgroundColor: theme.colors.background },
         header: { padding: 20, paddingTop: 60, paddingBottom: 20 },
@@ -316,7 +410,8 @@ const MyRidesScreen = () => {
         actionButtons: { flexDirection: 'row', gap: 12, padding: 16, paddingTop: 0 },
         rejectButton: { flex: 1, padding: 12, borderRadius: 8, backgroundColor: theme.colors.surfaceVariant, alignItems: 'center' },
         rejectButtonText: { fontSize: 14, fontWeight: '600', color: theme.colors.error },
-        acceptButton: { flex: 1, padding: 12, borderRadius: 8, alignItems: 'center' },
+        acceptButtonWrapper: { flex: 1, borderRadius: 8, overflow: 'hidden' },
+        acceptButton: { padding: 12, alignItems: 'center' },
         acceptButtonText: { fontSize: 14, fontWeight: '600', color: '#fff' },
         cancelButton: { padding: 12, borderRadius: 8, backgroundColor: theme.colors.surfaceVariant, alignItems: 'center', margin: 16, marginTop: 0 },
         cancelButtonText: { fontSize: 14, fontWeight: '600', color: theme.colors.error },
@@ -326,6 +421,8 @@ const MyRidesScreen = () => {
         emptyIcon: { fontSize: 64, marginBottom: 16 },
         emptyTitle: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text, marginBottom: 8 },
         emptyText: { fontSize: 14, color: theme.colors.textSecondary, textAlign: 'center', paddingHorizontal: 40 },
+        viewDetailsButton: { padding: 12, borderRadius: 8, backgroundColor: theme.colors.primary, alignItems: 'center', margin: 16, marginTop: 0 },
+        viewDetailsButtonText: { fontSize: 14, fontWeight: '600', color: '#fff' },
     });
 
     return (
@@ -358,6 +455,14 @@ const MyRidesScreen = () => {
                         My Rides
                     </Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.tab, activeTab === 'requests' && styles.activeTab]}
+                    onPress={() => setActiveTab('requests')}
+                >
+                    <Text style={[styles.tabText, activeTab === 'requests' && styles.activeTabText]}>
+                        Requests
+                    </Text>
+                </TouchableOpacity>
             </View>
 
             {/* Content */}
@@ -377,16 +482,30 @@ const MyRidesScreen = () => {
                             </Text>
                         </View>
                     )
-                ) : driverBookings.length > 0 ? (
-                    driverBookings.map(renderDriverBooking)
+                ) : activeTab === 'rides' ? (
+                    driverRides.length > 0 ? (
+                        driverRides.map(renderPublishedRide)
+                    ) : (
+                        <View style={styles.emptyState}>
+                            <Text style={styles.emptyIcon}>🚗</Text>
+                            <Text style={styles.emptyTitle}>No Published Rides</Text>
+                            <Text style={styles.emptyText}>
+                                Rides you publish will appear here
+                            </Text>
+                        </View>
+                    )
                 ) : (
-                    <View style={styles.emptyState}>
-                        <Text style={styles.emptyIcon}>🚗</Text>
-                        <Text style={styles.emptyTitle}>No Ride Requests</Text>
-                        <Text style={styles.emptyText}>
-                            Booking requests for your published rides will appear here
-                        </Text>
-                    </View>
+                    driverBookings.length > 0 ? (
+                        driverBookings.map(renderDriverBooking)
+                    ) : (
+                        <View style={styles.emptyState}>
+                            <Text style={styles.emptyIcon}>📨</Text>
+                            <Text style={styles.emptyTitle}>No Booking Requests</Text>
+                            <Text style={styles.emptyText}>
+                                Booking requests from passengers will appear here
+                            </Text>
+                        </View>
+                    )
                 )}
             </ScrollView>
         </View>

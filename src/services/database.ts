@@ -246,6 +246,41 @@ export const deleteRide = async (rideId: string): Promise<boolean> => {
     }
 };
 
+/**
+ * Fetch all rides published by a driver
+ */
+export const fetchDriverRides = async (driverId: string): Promise<Ride[]> => {
+    try {
+        console.log('🚗 Fetching rides published by driver:', driverId);
+
+        const { data, error } = await supabase
+            .from('rides')
+            .select(`
+                *,
+                driver:profiles!driver_id (
+                    id,
+                    full_name,
+                    avatar_url
+                )
+            `)
+            .eq('driver_id', driverId)
+            .order('departure_date', { ascending: true })
+            .order('departure_time', { ascending: true });
+
+        if (error) {
+            console.error('❌ Error fetching driver rides:', error);
+            throw error;
+        }
+
+        console.log(`✅ Found ${data?.length || 0} published rides`);
+        return data || [];
+    } catch (error) {
+        console.error('💥 Failed to fetch driver rides:', error);
+        return [];
+    }
+};
+
+
 export const fetchProfile = async (userId: string): Promise<Profile | null> => {
     try {
         const { data, error } = await supabase
@@ -414,7 +449,7 @@ export const fetchDriverBookings = async (driverId: string): Promise<Booking[]> 
                     avatar_url
                 )
             `)
-            .eq('ride.driver_id', driverId)
+            .eq('rides.driver_id', driverId)
             .order('created_at', { ascending: false });
 
         if (error) {

@@ -58,25 +58,27 @@ const ProfileScreen = () => {
     const handleLogout = async () => {
         console.log('Logout button pressed');
 
-        const confirmed = Platform.OS === 'web'
-            ? window.confirm('Are you sure you want to logout?')
-            : true;
-
-        if (!confirmed) {
-            console.log('Logout cancelled');
-            return;
-        }
-
-        try {
-            console.log('User confirmed logout, calling signOut...');
-            await signOut();
-            console.log('SignOut completed successfully');
-        } catch (error: any) {
-            console.error('Logout error:', error);
-            if (Platform.OS === 'web') {
-                window.alert('Error: ' + (error.message || 'Failed to logout'));
-            }
-        }
+        Alert.alert(
+            'Logout',
+            'Are you sure you want to logout?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Logout',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            console.log('User confirmed logout, calling signOut...');
+                            await signOut();
+                            console.log('SignOut completed successfully');
+                        } catch (error: any) {
+                            console.error('Logout error:', error);
+                            Alert.alert('Error', error.message || 'Failed to logout');
+                        }
+                    },
+                },
+            ]
+        );
     };
 
     const getInitials = () => {
