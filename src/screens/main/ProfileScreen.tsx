@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert, Switch } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { fetchProfile, Profile } from '../../services/database';
 import ReviewCard from '../../components/ReviewCard';
+import GlassCard from '../../components/GlassCard';
 
 // Hardcoded reviews for demonstration
 const MOCK_REVIEWS = [
@@ -32,6 +35,7 @@ const MOCK_REVIEWS = [
 
 const ProfileScreen = () => {
     const { user, signOut } = useAuth();
+    const { theme, isDark, toggleTheme } = useTheme();
     const navigation = useNavigation();
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -87,96 +91,208 @@ const ProfileScreen = () => {
         return user?.email?.charAt(0).toUpperCase() || 'U';
     };
 
+    const styles = StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.colors.background },
+        scrollContent: { paddingBottom: 20 },
+        header: {
+            padding: 20,
+            paddingTop: 60,
+            alignItems: 'center',
+            paddingBottom: 30,
+        },
+        avatarContainer: {
+            marginBottom: 16,
+        },
+        avatar: {
+            width: 90,
+            height: 90,
+            borderRadius: 45,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 3,
+            borderColor: theme.colors.primary,
+        },
+        avatarText: { fontSize: 36, fontWeight: 'bold', color: '#fff' },
+        name: { fontSize: 24, fontWeight: 'bold', color: theme.colors.text, marginBottom: 4 },
+        email: { fontSize: 14, color: theme.colors.textSecondary },
+        section: { marginTop: 20, paddingHorizontal: 16 },
+        sectionTitle: {
+            fontSize: 14,
+            fontWeight: '600',
+            color: theme.colors.textTertiary,
+            paddingHorizontal: 4,
+            paddingVertical: 12,
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+        },
+        glassCard: {
+            marginBottom: 12,
+            overflow: 'hidden',
+        },
+        menuItem: {
+            paddingVertical: 16,
+            paddingHorizontal: 20,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+        },
+        menuItemWithBorder: {
+            borderBottomWidth: 1,
+            borderBottomColor: theme.colors.borderLight,
+        },
+        menuText: { fontSize: 16, color: theme.colors.text, fontWeight: '500' },
+        menuArrow: { fontSize: 24, color: theme.colors.textTertiary },
+        menuSubtext: { fontSize: 12, color: theme.colors.textTertiary, fontStyle: 'italic' },
+        themeToggleContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+        },
+        themeToggleLabel: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        themeIcon: {
+            fontSize: 20,
+            marginRight: 8,
+        },
+        ratingOverview: {
+            alignItems: 'center',
+            marginBottom: 16,
+            paddingVertical: 20,
+            borderRadius: theme.borderRadius.lg,
+        },
+        averageRating: { fontSize: 36, fontWeight: 'bold', color: theme.colors.text, marginBottom: 4 },
+        ratingSubtext: { fontSize: 14, color: theme.colors.textSecondary },
+        logoutButton: {
+            marginHorizontal: 16,
+            marginTop: 20,
+            borderRadius: theme.borderRadius.lg,
+            overflow: 'hidden',
+        },
+        logoutGradient: {
+            padding: 18,
+            alignItems: 'center',
+            ...theme.shadows.medium,
+        },
+        logoutText: { fontSize: 16, color: '#fff', fontWeight: '600' },
+    });
+
     return (
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{getInitials()}</Text>
+                {/* Header with Gradient */}
+                <LinearGradient
+                    colors={theme.gradients.primary as any}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.header}
+                >
+                    <View style={styles.avatarContainer}>
+                        <LinearGradient
+                            colors={theme.gradients.accent as any}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            style={styles.avatar}
+                        >
+                            <Text style={styles.avatarText}>{getInitials()}</Text>
+                        </LinearGradient>
                     </View>
                     <Text style={styles.name}>{profile?.full_name || 'User'}</Text>
                     <Text style={styles.email}>{user?.email || 'No email'}</Text>
-                </View>
+                </LinearGradient>
 
+                {/* Account Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Account</Text>
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => (navigation as any).navigate('EditProfile')}
-                    >
-                        <Text style={styles.menuText}>Edit Profile</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => (navigation as any).navigate('Verification')}
-                    >
-                        <Text style={styles.menuText}>Verification</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.menuItem}>
-                        <Text style={styles.menuText}>Payment Methods</Text>
-                        <Text style={styles.menuSubtext}>Coming soon</Text>
-                    </TouchableOpacity>
+                    <GlassCard style={styles.glassCard} intensity="medium">
+                        <TouchableOpacity
+                            style={[styles.menuItem, styles.menuItemWithBorder]}
+                            onPress={() => (navigation as any).navigate('EditProfile')}
+                        >
+                            <Text style={styles.menuText}>Edit Profile</Text>
+                            <Text style={styles.menuArrow}>›</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.menuItem, styles.menuItemWithBorder]}
+                            onPress={() => (navigation as any).navigate('Verification')}
+                        >
+                            <Text style={styles.menuText}>Verification</Text>
+                            <Text style={styles.menuArrow}>›</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.menuItem}>
+                            <Text style={styles.menuText}>Payment Methods</Text>
+                            <Text style={styles.menuSubtext}>Coming soon</Text>
+                        </TouchableOpacity>
+                    </GlassCard>
                 </View>
 
+                {/* Preferences Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Preferences</Text>
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => (navigation as any).navigate('Notifications')}
-                    >
-                        <Text style={styles.menuText}>Notifications</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => (navigation as any).navigate('Privacy')}
-                    >
-                        <Text style={styles.menuText}>Privacy</Text>
-                        <Text style={styles.menuArrow}>›</Text>
-                    </TouchableOpacity>
+                    <GlassCard style={styles.glassCard} intensity="medium">
+                        {/* Theme Toggle */}
+                        <View style={[styles.menuItem, styles.menuItemWithBorder]}>
+                            <View style={styles.themeToggleContainer}>
+                                <View style={styles.themeToggleLabel}>
+                                    <Text style={styles.themeIcon}>{isDark ? '🌙' : '☀️'}</Text>
+                                    <Text style={styles.menuText}>
+                                        {isDark ? 'Dark Mode' : 'Light Mode'}
+                                    </Text>
+                                </View>
+                                <Switch
+                                    value={isDark}
+                                    onValueChange={toggleTheme}
+                                    trackColor={{ false: theme.colors.borderLight, true: theme.colors.primary }}
+                                    thumbColor={isDark ? theme.colors.primaryLight : '#f4f3f4'}
+                                />
+                            </View>
+                        </View>
+                        <TouchableOpacity
+                            style={[styles.menuItem, styles.menuItemWithBorder]}
+                            onPress={() => (navigation as any).navigate('Notifications')}
+                        >
+                            <Text style={styles.menuText}>Notifications</Text>
+                            <Text style={styles.menuArrow}>›</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.menuItem}
+                            onPress={() => (navigation as any).navigate('Privacy')}
+                        >
+                            <Text style={styles.menuText}>Privacy</Text>
+                            <Text style={styles.menuArrow}>›</Text>
+                        </TouchableOpacity>
+                    </GlassCard>
                 </View>
 
                 {/* Reviews Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Reviews ({MOCK_REVIEWS.length})</Text>
-                    <View style={styles.ratingOverview}>
-                        <Text style={styles.averageRating}>4.7 ⭐</Text>
-                        <Text style={styles.ratingSubtext}>Based on {MOCK_REVIEWS.length} reviews</Text>
-                    </View>
+                    <GlassCard style={styles.glassCard} intensity="medium">
+                        <View style={styles.ratingOverview}>
+                            <Text style={styles.averageRating}>4.7 ⭐</Text>
+                            <Text style={styles.ratingSubtext}>Based on {MOCK_REVIEWS.length} reviews</Text>
+                        </View>
+                    </GlassCard>
                     {MOCK_REVIEWS.map(review => (
                         <ReviewCard key={review.id} {...review} />
                     ))}
                 </View>
 
+                {/* Logout Button */}
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-                    <Text style={styles.logoutText}>Logout</Text>
+                    <LinearGradient
+                        colors={['#FF3B30', '#FF6B6B'] as any}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.logoutGradient}
+                    >
+                        <Text style={styles.logoutText}>Logout</Text>
+                    </LinearGradient>
                 </TouchableOpacity>
             </ScrollView>
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
-    scrollContent: { paddingBottom: 20 },
-    header: { backgroundColor: '#fff', padding: 20, paddingTop: 60, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#eee' },
-    avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-    avatarText: { fontSize: 32, fontWeight: 'bold', color: '#fff' },
-    name: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 4 },
-    email: { fontSize: 14, color: '#666' },
-    section: { backgroundColor: '#fff', marginTop: 20, paddingVertical: 8 },
-    sectionTitle: { fontSize: 14, fontWeight: '600', color: '#999', paddingHorizontal: 20, paddingVertical: 8 },
-    menuItem: { paddingVertical: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f5f5f5', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    menuText: { fontSize: 16, color: '#333' },
-    menuArrow: { fontSize: 24, color: '#ccc' },
-    menuSubtext: { fontSize: 12, color: '#999', fontStyle: 'italic' },
-    ratingOverview: { alignItems: 'center', marginBottom: 16, paddingVertical: 12, backgroundColor: '#f5f5f5', borderRadius: 8 },
-    averageRating: { fontSize: 32, fontWeight: 'bold', color: '#333', marginBottom: 4 },
-    ratingSubtext: { fontSize: 14, color: '#666' },
-    logoutButton: { backgroundColor: '#FF3B30', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 20 },
-    logoutText: { fontSize: 16, color: '#fff', fontWeight: '600' },
-});
 
 export default ProfileScreen;

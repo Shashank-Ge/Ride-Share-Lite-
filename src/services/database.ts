@@ -15,11 +15,17 @@ export interface Ride {
     vehicle_model?: string;
     vehicle_color?: string;
     status?: string;
+    route_geometry?: any; // GeoJSON geometry from OpenRouteService
+    route_distance?: number; // Distance in kilometers
+    route_duration?: number; // Duration in minutes
+    stopovers?: string[]; // Array of stopover city names
     created_at: string;
     driver?: {
         id: string;
         full_name: string;
         avatar_url?: string;
+        bio?: string;
+        phone?: string;
     };
 }
 

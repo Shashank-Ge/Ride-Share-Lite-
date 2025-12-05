@@ -9,8 +9,10 @@ import {
     Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MainTabsNavigationProp } from '../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { createRide, searchRides } from '../../services/database';
 import { fetchRoute, geocodePlace } from '../../services/routing';
 import CalendarPicker from '../../components/CalendarPicker';
@@ -33,6 +35,7 @@ interface PublishRideForm {
 const PublishScreen = () => {
     const navigation = useNavigation<MainTabsNavigationProp>();
     const { session } = useAuth();
+    const { theme } = useTheme();
     const [currentStep, setCurrentStep] = useState(1);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
@@ -274,6 +277,64 @@ const PublishScreen = () => {
         }
     };
 
+    const styles = StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.colors.background },
+        header: { padding: 20, paddingTop: 60, paddingBottom: 20 },
+        headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 4 },
+        headerSubtitle: { fontSize: 14, color: '#fff', opacity: 0.9 },
+        progressContainer: { flexDirection: 'row', backgroundColor: theme.colors.surface, paddingVertical: 20, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
+        progressStepContainer: { flexDirection: 'row', alignItems: 'center' },
+        progressDot: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.borderLight, justifyContent: 'center', alignItems: 'center' },
+        progressDotActive: { backgroundColor: theme.colors.primary },
+        progressNumber: { fontSize: 14, fontWeight: 'bold', color: theme.colors.textTertiary },
+        progressNumberActive: { color: '#fff' },
+        progressLine: { width: 40, height: 2, backgroundColor: theme.colors.borderLight, marginHorizontal: 8 },
+        progressLineActive: { backgroundColor: theme.colors.primary },
+        content: { flex: 1, padding: 16 },
+        stepContainer: { backgroundColor: theme.colors.surface, borderRadius: 12, padding: 20, marginBottom: 16 },
+        stepTitle: { fontSize: 24, fontWeight: 'bold', color: theme.colors.text, marginBottom: 4 },
+        stepSubtitle: { fontSize: 14, color: theme.colors.textSecondary, marginBottom: 24 },
+        inputGroup: { marginBottom: 20 },
+        label: { fontSize: 14, fontWeight: '600', color: theme.colors.text, marginBottom: 8 },
+        input: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: theme.colors.surface, color: theme.colors.text },
+        inputText: { fontSize: 16, color: theme.colors.text },
+        infoBox: { backgroundColor: theme.colors.info + '20', padding: 12, borderRadius: 8, marginTop: 8 },
+        infoText: { fontSize: 13, color: theme.colors.info },
+        seatsSelector: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 },
+        seatButton: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
+        seatButtonText: { fontSize: 24, color: '#fff', fontWeight: 'bold' },
+        seatsCount: { fontSize: 24, fontWeight: 'bold', color: theme.colors.text, minWidth: 40, textAlign: 'center' },
+        earningsBox: { backgroundColor: theme.colors.success + '20', padding: 16, borderRadius: 8, alignItems: 'center', marginBottom: 20 },
+        earningsLabel: { fontSize: 12, color: theme.colors.success, marginBottom: 4 },
+        earningsAmount: { fontSize: 32, fontWeight: 'bold', color: theme.colors.success },
+        earningsSubtext: { fontSize: 12, color: theme.colors.success, marginTop: 4 },
+        reviewCard: { backgroundColor: theme.colors.surfaceVariant, borderRadius: 8, padding: 16, marginBottom: 20 },
+        reviewRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+        reviewLabel: { fontSize: 14, color: theme.colors.textSecondary, fontWeight: '500' },
+        reviewValue: { fontSize: 14, color: theme.colors.text, fontWeight: '600', flex: 1, textAlign: 'right' },
+        toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border, marginBottom: 20 },
+        toggleInfo: { flex: 1 },
+        toggleLabel: { fontSize: 16, fontWeight: '600', color: theme.colors.text, marginBottom: 2 },
+        toggleSubtext: { fontSize: 12, color: theme.colors.textSecondary },
+        toggle: { width: 50, height: 30, borderRadius: 15, backgroundColor: theme.colors.borderLight, padding: 2, justifyContent: 'center' },
+        toggleActive: { backgroundColor: theme.colors.success },
+        toggleThumb: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff' },
+        toggleThumbActive: { alignSelf: 'flex-end' },
+        termsRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+        checkbox: { width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' },
+        checkboxActive: { backgroundColor: theme.colors.primary },
+        checkmark: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+        termsText: { fontSize: 14, color: theme.colors.text, flex: 1 },
+        footer: { flexDirection: 'row', padding: 16, backgroundColor: theme.colors.surface, borderTopWidth: 1, borderTopColor: theme.colors.border, gap: 12 },
+        backButton: { flex: 1, padding: 16, borderRadius: 8, backgroundColor: theme.colors.surfaceVariant, alignItems: 'center' },
+        backButtonText: { fontSize: 16, fontWeight: '600', color: theme.colors.text },
+        nextButton: { flex: 2, padding: 16, borderRadius: 8, alignItems: 'center' },
+        nextButtonText: { fontSize: 16, fontWeight: '600', color: '#fff' },
+        publishButton: { flex: 1, padding: 16, borderRadius: 8, alignItems: 'center' },
+        publishButtonDisabled: { opacity: 0.6 },
+        publishButtonText: { fontSize: 16, fontWeight: '600', color: '#fff' },
+    });
+
     const renderProgressBar = () => (
         <View style={styles.progressContainer}>
             {[1, 2, 3, 4].map((step) => (
@@ -509,10 +570,15 @@ const PublishScreen = () => {
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
+            <LinearGradient
+                colors={theme.gradients.primary as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.header}
+            >
                 <Text style={styles.headerTitle}>Publish a Ride</Text>
                 <Text style={styles.headerSubtitle}>Step {currentStep} of 4</Text>
-            </View>
+            </LinearGradient>
 
             {renderProgressBar()}
 
@@ -551,63 +617,5 @@ const PublishScreen = () => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
-    header: { backgroundColor: '#007AFF', padding: 20, paddingTop: 60, paddingBottom: 20 },
-    headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 4 },
-    headerSubtitle: { fontSize: 14, color: '#fff', opacity: 0.9 },
-    progressContainer: { flexDirection: 'row', backgroundColor: '#fff', paddingVertical: 20, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
-    progressStepContainer: { flexDirection: 'row', alignItems: 'center' },
-    progressDot: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#e0e0e0', justifyContent: 'center', alignItems: 'center' },
-    progressDotActive: { backgroundColor: '#007AFF' },
-    progressNumber: { fontSize: 14, fontWeight: 'bold', color: '#999' },
-    progressNumberActive: { color: '#fff' },
-    progressLine: { width: 40, height: 2, backgroundColor: '#e0e0e0', marginHorizontal: 8 },
-    progressLineActive: { backgroundColor: '#007AFF' },
-    content: { flex: 1, padding: 16 },
-    stepContainer: { backgroundColor: '#fff', borderRadius: 12, padding: 20, marginBottom: 16 },
-    stepTitle: { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 4 },
-    stepSubtitle: { fontSize: 14, color: '#666', marginBottom: 24 },
-    inputGroup: { marginBottom: 20 },
-    label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
-    input: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#fafafa' },
-    inputText: { fontSize: 16, color: '#333' },
-    infoBox: { backgroundColor: '#E3F2FD', padding: 12, borderRadius: 8, marginTop: 8 },
-    infoText: { fontSize: 13, color: '#1976D2' },
-    seatsSelector: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 },
-    seatButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center' },
-    seatButtonText: { fontSize: 24, color: '#fff', fontWeight: 'bold' },
-    seatsCount: { fontSize: 24, fontWeight: 'bold', color: '#333', minWidth: 40, textAlign: 'center' },
-    earningsBox: { backgroundColor: '#E8F5E9', padding: 16, borderRadius: 8, alignItems: 'center', marginBottom: 20 },
-    earningsLabel: { fontSize: 12, color: '#2E7D32', marginBottom: 4 },
-    earningsAmount: { fontSize: 32, fontWeight: 'bold', color: '#2E7D32' },
-    earningsSubtext: { fontSize: 12, color: '#2E7D32', marginTop: 4 },
-    reviewCard: { backgroundColor: '#fafafa', borderRadius: 8, padding: 16, marginBottom: 20 },
-    reviewRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
-    reviewLabel: { fontSize: 14, color: '#666', fontWeight: '500' },
-    reviewValue: { fontSize: 14, color: '#333', fontWeight: '600', flex: 1, textAlign: 'right' },
-    toggleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#e0e0e0', marginBottom: 20 },
-    toggleInfo: { flex: 1 },
-    toggleLabel: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 2 },
-    toggleSubtext: { fontSize: 12, color: '#666' },
-    toggle: { width: 50, height: 30, borderRadius: 15, backgroundColor: '#e0e0e0', padding: 2, justifyContent: 'center' },
-    toggleActive: { backgroundColor: '#34C759' },
-    toggleThumb: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#fff' },
-    toggleThumbActive: { alignSelf: 'flex-end' },
-    termsRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    checkbox: { width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: '#007AFF', justifyContent: 'center', alignItems: 'center' },
-    checkboxActive: { backgroundColor: '#007AFF' },
-    checkmark: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-    termsText: { fontSize: 14, color: '#333', flex: 1 },
-    footer: { flexDirection: 'row', padding: 16, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e0e0e0', gap: 12 },
-    backButton: { flex: 1, padding: 16, borderRadius: 8, backgroundColor: '#f0f0f0', alignItems: 'center' },
-    backButtonText: { fontSize: 16, fontWeight: '600', color: '#333' },
-    nextButton: { flex: 2, padding: 16, borderRadius: 8, backgroundColor: '#007AFF', alignItems: 'center' },
-    nextButtonText: { fontSize: 16, fontWeight: '600', color: '#fff' },
-    publishButton: { flex: 1, padding: 16, borderRadius: 8, backgroundColor: '#34C759', alignItems: 'center' },
-    publishButtonDisabled: { backgroundColor: '#999', opacity: 0.6 },
-    publishButtonText: { fontSize: 16, fontWeight: '600', color: '#fff' },
-});
 
 export default PublishScreen;

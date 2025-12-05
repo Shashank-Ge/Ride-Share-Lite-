@@ -1,14 +1,31 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
+import GlassCard from '../../components/GlassCard';
 
 const NotificationsScreen = () => {
     const navigation = useNavigation();
+    const { theme } = useTheme();
     const [emailNotifications, setEmailNotifications] = useState(true);
     const [pushNotifications, setPushNotifications] = useState(true);
     const [bookingUpdates, setBookingUpdates] = useState(true);
     const [rideReminders, setRideReminders] = useState(true);
     const [messages, setMessages] = useState(true);
+
+    const styles = StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.colors.background },
+        header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 60, backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+        headerTitle: { fontSize: 18, fontWeight: 'bold', color: theme.colors.text },
+        backButton: { fontSize: 24, color: theme.colors.primary },
+        content: { flex: 1 },
+        section: { marginTop: 20, paddingVertical: 8 },
+        sectionTitle: { fontSize: 14, fontWeight: '600', color: theme.colors.textTertiary, paddingHorizontal: 20, paddingVertical: 8 },
+        settingItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: theme.colors.borderLight },
+        settingInfo: { flex: 1, marginRight: 16 },
+        settingLabel: { fontSize: 16, color: theme.colors.text, marginBottom: 2 },
+        settingDesc: { fontSize: 13, color: theme.colors.textSecondary },
+    });
 
     return (
         <View style={styles.container}>
@@ -21,7 +38,7 @@ const NotificationsScreen = () => {
             </View>
 
             <ScrollView style={styles.content}>
-                <View style={styles.section}>
+                <GlassCard style={styles.section} intensity="light">
                     <Text style={styles.sectionTitle}>Notification Channels</Text>
 
                     <View style={styles.settingItem}>
@@ -32,7 +49,7 @@ const NotificationsScreen = () => {
                         <Switch
                             value={emailNotifications}
                             onValueChange={setEmailNotifications}
-                            trackColor={{ false: '#e0e0e0', true: '#007AFF' }}
+                            trackColor={{ false: theme.colors.borderLight, true: theme.colors.primary }}
                         />
                     </View>
 
@@ -44,12 +61,12 @@ const NotificationsScreen = () => {
                         <Switch
                             value={pushNotifications}
                             onValueChange={setPushNotifications}
-                            trackColor={{ false: '#e0e0e0', true: '#007AFF' }}
+                            trackColor={{ false: theme.colors.borderLight, true: theme.colors.primary }}
                         />
                     </View>
-                </View>
+                </GlassCard>
 
-                <View style={styles.section}>
+                <GlassCard style={styles.section} intensity="light">
                     <Text style={styles.sectionTitle}>Notification Types</Text>
 
                     <View style={styles.settingItem}>
@@ -60,7 +77,7 @@ const NotificationsScreen = () => {
                         <Switch
                             value={bookingUpdates}
                             onValueChange={setBookingUpdates}
-                            trackColor={{ false: '#e0e0e0', true: '#007AFF' }}
+                            trackColor={{ false: theme.colors.borderLight, true: theme.colors.primary }}
                         />
                     </View>
 
@@ -72,7 +89,7 @@ const NotificationsScreen = () => {
                         <Switch
                             value={rideReminders}
                             onValueChange={setRideReminders}
-                            trackColor={{ false: '#e0e0e0', true: '#007AFF' }}
+                            trackColor={{ false: theme.colors.borderLight, true: theme.colors.primary }}
                         />
                     </View>
 
@@ -84,27 +101,13 @@ const NotificationsScreen = () => {
                         <Switch
                             value={messages}
                             onValueChange={setMessages}
-                            trackColor={{ false: '#e0e0e0', true: '#007AFF' }}
+                            trackColor={{ false: theme.colors.borderLight, true: theme.colors.primary }}
                         />
                     </View>
-                </View>
+                </GlassCard>
             </ScrollView>
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 60, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
-    headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-    backButton: { fontSize: 24, color: '#007AFF' },
-    content: { flex: 1 },
-    section: { backgroundColor: '#fff', marginTop: 20, paddingVertical: 8 },
-    sectionTitle: { fontSize: 14, fontWeight: '600', color: '#999', paddingHorizontal: 20, paddingVertical: 8 },
-    settingItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f5f5f5' },
-    settingInfo: { flex: 1, marginRight: 16 },
-    settingLabel: { fontSize: 16, color: '#333', marginBottom: 2 },
-    settingDesc: { fontSize: 13, color: '#666' },
-});
 
 export default NotificationsScreen;

@@ -8,6 +8,9 @@ import {
     Dimensions,
     Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../context/ThemeContext';
+import GlassCard from './GlassCard';
 
 interface CalendarPickerProps {
     visible: boolean;
@@ -24,6 +27,7 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     onClose,
     minimumDate = new Date(),
 }) => {
+    const { theme } = useTheme();
     const [currentMonth, setCurrentMonth] = useState(selectedDate);
 
     const getDaysInMonth = (date: Date) => {
@@ -43,12 +47,10 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
         const firstDay = getFirstDayOfMonth(currentMonth);
         const days: (number | null)[] = [];
 
-        // Add empty slots for days before the first day of the month
         for (let i = 0; i < firstDay; i++) {
             days.push(null);
         }
 
-        // Add all days of the month
         for (let i = 1; i <= daysInMonth; i++) {
             days.push(i);
         }
@@ -67,7 +69,6 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
     const handleDateSelect = (day: number) => {
         const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
 
-        // Check if date is before minimum date
         if (minimumDate && newDate < minimumDate) {
             return;
         }
@@ -119,6 +120,113 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
 
     const calendarDays = generateCalendarDays();
 
+    const { width } = Dimensions.get('window');
+    const calendarWidth = Math.min(width - 40, 400);
+
+    const styles = StyleSheet.create({
+        overlay: {
+            flex: 1,
+            backgroundColor: theme.colors.overlay,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        calendarCard: {
+            width: calendarWidth,
+            maxWidth: 400,
+        },
+        calendarContent: {
+            padding: 20,
+        },
+        header: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 20,
+        },
+        navButton: {
+            width: 40,
+            height: 40,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderRadius: 20,
+            overflow: 'hidden',
+        },
+        navButtonText: {
+            fontSize: 24,
+            color: '#fff',
+            fontWeight: 'bold',
+        },
+        monthYear: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: theme.colors.text,
+        },
+        dayNamesRow: {
+            flexDirection: 'row',
+            marginBottom: 10,
+        },
+        dayNameCell: {
+            flex: 1,
+            alignItems: 'center',
+            paddingVertical: 8,
+        },
+        dayNameText: {
+            fontSize: 12,
+            fontWeight: '600',
+            color: theme.colors.textSecondary,
+        },
+        calendarGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+        },
+        dayCell: {
+            width: `${100 / 7}%`,
+            aspectRatio: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 4,
+        },
+        selectedDay: {
+            borderRadius: 8,
+            overflow: 'hidden',
+        },
+        todayDay: {
+            borderWidth: 2,
+            borderColor: theme.colors.primary,
+            borderRadius: 8,
+        },
+        dayText: {
+            fontSize: 16,
+            color: theme.colors.text,
+            fontWeight: '500',
+        },
+        disabledDayText: {
+            color: theme.colors.textTertiary,
+        },
+        selectedDayText: {
+            color: '#fff',
+            fontWeight: 'bold',
+        },
+        todayDayText: {
+            color: theme.colors.primary,
+            fontWeight: 'bold',
+        },
+        closeButton: {
+            marginTop: 20,
+            borderRadius: theme.borderRadius.md,
+            overflow: 'hidden',
+        },
+        closeButtonGradient: {
+            padding: 12,
+            alignItems: 'center',
+        },
+        closeButtonText: {
+            fontSize: 16,
+            color: '#fff',
+            fontWeight: '600',
+        },
+    });
+
     return (
         <Modal
             visible={visible}
@@ -135,203 +243,117 @@ const CalendarPicker: React.FC<CalendarPickerProps> = ({
                     activeOpacity={1}
                     onPress={(e) => e.stopPropagation()}
                 >
-                    <View style={styles.calendarContainer}>
-                        {/* Header */}
-                        <View style={styles.header}>
-                            <TouchableOpacity
-                                onPress={handlePreviousMonth}
-                                style={styles.navButton}
-                            >
-                                <Text style={styles.navButtonText}>←</Text>
-                            </TouchableOpacity>
-
-                            <Text style={styles.monthYear}>
-                                {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                            </Text>
-
-                            <TouchableOpacity
-                                onPress={handleNextMonth}
-                                style={styles.navButton}
-                            >
-                                <Text style={styles.navButtonText}>→</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* Day names */}
-                        <View style={styles.dayNamesRow}>
-                            {dayNames.map((day) => (
-                                <View key={day} style={styles.dayNameCell}>
-                                    <Text style={styles.dayNameText}>{day}</Text>
-                                </View>
-                            ))}
-                        </View>
-
-                        {/* Calendar grid */}
-                        <View style={styles.calendarGrid}>
-                            {calendarDays.map((day, index) => {
-                                const disabled = isDateDisabled(day);
-                                const selected = isDateSelected(day);
-                                const today = isToday(day);
-
-                                return (
-                                    <TouchableOpacity
-                                        key={index}
-                                        style={[
-                                            styles.dayCell,
-                                            selected && styles.selectedDay,
-                                            today && !selected && styles.todayDay,
-                                        ]}
-                                        onPress={() => day && !disabled && handleDateSelect(day)}
-                                        disabled={disabled || day === null}
+                    <GlassCard style={styles.calendarCard} intensity="strong">
+                        <View style={styles.calendarContent}>
+                            {/* Header */}
+                            <View style={styles.header}>
+                                <TouchableOpacity
+                                    onPress={handlePreviousMonth}
+                                >
+                                    <LinearGradient
+                                        colors={theme.gradients.primary as any}
+                                        style={styles.navButton}
                                     >
-                                        {day !== null && (
-                                            <Text
-                                                style={[
-                                                    styles.dayText,
-                                                    disabled && styles.disabledDayText,
-                                                    selected && styles.selectedDayText,
-                                                    today && !selected && styles.todayDayText,
-                                                ]}
-                                            >
-                                                {day}
-                                            </Text>
-                                        )}
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
+                                        <Text style={styles.navButtonText}>←</Text>
+                                    </LinearGradient>
+                                </TouchableOpacity>
 
-                        {/* Close button */}
-                        <TouchableOpacity
-                            style={styles.closeButton}
-                            onPress={onClose}
-                        >
-                            <Text style={styles.closeButtonText}>Close</Text>
-                        </TouchableOpacity>
-                    </View>
+                                <Text style={styles.monthYear}>
+                                    {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                                </Text>
+
+                                <TouchableOpacity
+                                    onPress={handleNextMonth}
+                                >
+                                    <LinearGradient
+                                        colors={theme.gradients.primary as any}
+                                        style={styles.navButton}
+                                    >
+                                        <Text style={styles.navButtonText}>→</Text>
+                                    </LinearGradient>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Day names */}
+                            <View style={styles.dayNamesRow}>
+                                {dayNames.map((day) => (
+                                    <View key={day} style={styles.dayNameCell}>
+                                        <Text style={styles.dayNameText}>{day}</Text>
+                                    </View>
+                                ))}
+                            </View>
+
+                            {/* Calendar grid */}
+                            <View style={styles.calendarGrid}>
+                                {calendarDays.map((day, index) => {
+                                    const disabled = isDateDisabled(day);
+                                    const selected = isDateSelected(day);
+                                    const today = isToday(day);
+
+                                    if (selected && day !== null) {
+                                        return (
+                                            <TouchableOpacity
+                                                key={index}
+                                                style={styles.dayCell}
+                                                onPress={() => day && !disabled && handleDateSelect(day)}
+                                                disabled={disabled || day === null}
+                                            >
+                                                <LinearGradient
+                                                    colors={theme.gradients.primary as any}
+                                                    style={styles.selectedDay}
+                                                >
+                                                    <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                                                        <Text style={styles.selectedDayText}>{day}</Text>
+                                                    </View>
+                                                </LinearGradient>
+                                            </TouchableOpacity>
+                                        );
+                                    }
+
+                                    return (
+                                        <TouchableOpacity
+                                            key={index}
+                                            style={[
+                                                styles.dayCell,
+                                                today && !selected && styles.todayDay,
+                                            ]}
+                                            onPress={() => day && !disabled && handleDateSelect(day)}
+                                            disabled={disabled || day === null}
+                                        >
+                                            {day !== null && (
+                                                <Text
+                                                    style={[
+                                                        styles.dayText,
+                                                        disabled && styles.disabledDayText,
+                                                        today && !selected && styles.todayDayText,
+                                                    ]}
+                                                >
+                                                    {day}
+                                                </Text>
+                                            )}
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+
+                            {/* Close button */}
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={onClose}
+                            >
+                                <LinearGradient
+                                    colors={theme.gradients.secondary as any}
+                                    style={styles.closeButtonGradient}
+                                >
+                                    <Text style={styles.closeButtonText}>Close</Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </View>
+                    </GlassCard>
                 </TouchableOpacity>
             </TouchableOpacity>
         </Modal>
     );
 };
-
-const { width } = Dimensions.get('window');
-const calendarWidth = Math.min(width - 40, 400);
-
-const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    calendarContainer: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 20,
-        width: calendarWidth,
-        maxWidth: 400,
-        ...Platform.select({
-            ios: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-            },
-            android: {
-                elevation: 8,
-            },
-            web: {
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
-            },
-        }),
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    navButton: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 20,
-        backgroundColor: '#f0f0f0',
-    },
-    navButtonText: {
-        fontSize: 24,
-        color: '#007AFF',
-        fontWeight: 'bold',
-    },
-    monthYear: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    dayNamesRow: {
-        flexDirection: 'row',
-        marginBottom: 10,
-    },
-    dayNameCell: {
-        flex: 1,
-        alignItems: 'center',
-        paddingVertical: 8,
-    },
-    dayNameText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#666',
-    },
-    calendarGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-    },
-    dayCell: {
-        width: `${100 / 7}%`,
-        aspectRatio: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 4,
-    },
-    selectedDay: {
-        backgroundColor: '#007AFF',
-        borderRadius: 8,
-    },
-    todayDay: {
-        borderWidth: 2,
-        borderColor: '#007AFF',
-        borderRadius: 8,
-    },
-    dayText: {
-        fontSize: 16,
-        color: '#333',
-        fontWeight: '500',
-    },
-    disabledDayText: {
-        color: '#ccc',
-    },
-    selectedDayText: {
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    todayDayText: {
-        color: '#007AFF',
-        fontWeight: 'bold',
-    },
-    closeButton: {
-        marginTop: 20,
-        backgroundColor: '#f0f0f0',
-        padding: 12,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    closeButtonText: {
-        fontSize: 16,
-        color: '#666',
-        fontWeight: '600',
-    },
-});
 
 export default CalendarPicker;

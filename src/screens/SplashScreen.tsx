@@ -1,37 +1,86 @@
-import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, Animated } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
+import AnimatedBackground from '../components/AnimatedBackground';
 
 const SplashScreen = () => {
+    const { theme } = useTheme();
+    const scaleAnim = useRef(new Animated.Value(0.3)).current;
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.spring(scaleAnim, {
+                toValue: 1,
+                friction: 4,
+                tension: 40,
+                useNativeDriver: true,
+            }),
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 800,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, []);
+
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        content: {
+            alignItems: 'center',
+        },
+        logoContainer: {
+            marginBottom: 16,
+        },
+        logo: {
+            fontSize: 72,
+        },
+        title: {
+            fontSize: 40,
+            fontWeight: 'bold',
+            color: '#fff',
+            marginBottom: 8,
+            textShadowColor: 'rgba(0,0,0,0.3)',
+            textShadowOffset: { width: 0, height: 2 },
+            textShadowRadius: 10,
+        },
+        subtitle: {
+            fontSize: 18,
+            color: '#fff',
+            opacity: 0.9,
+            marginBottom: 40,
+        },
+        loader: {
+            marginTop: 20,
+        },
+    });
+
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>RideShare Lite</Text>
-            <Text style={styles.subtitle}>Your Carpooling Companion</Text>
-            <ActivityIndicator size="large" color="#007AFF" style={styles.loader} />
-        </View>
+        <AnimatedBackground gradient={theme.gradients.hero}>
+            <View style={styles.container}>
+                <Animated.View
+                    style={[
+                        styles.content,
+                        {
+                            opacity: fadeAnim,
+                            transform: [{ scale: scaleAnim }],
+                        },
+                    ]}
+                >
+                    <View style={styles.logoContainer}>
+                        <Text style={styles.logo}>🚗</Text>
+                    </View>
+                    <Text style={styles.title}>RideShare Lite</Text>
+                    <Text style={styles.subtitle}>Your Carpooling Companion</Text>
+                    <ActivityIndicator size="large" color="#fff" style={styles.loader} />
+                </Animated.View>
+            </View>
+        </AnimatedBackground>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: '#007AFF',
-        marginBottom: 8,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: '#666',
-        marginBottom: 32,
-    },
-    loader: {
-        marginTop: 20,
-    },
-});
 
 export default SplashScreen;

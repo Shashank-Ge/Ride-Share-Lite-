@@ -8,11 +8,16 @@ import {
     TextInput,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MainTabsNavigationProp } from '../../types/navigation';
+import { useTheme } from '../../context/ThemeContext';
 import CalendarPicker from '../../components/CalendarPicker';
+import GlassCard from '../../components/GlassCard';
+import GradientButton from '../../components/GradientButton';
 
 const HomeScreen = () => {
     const navigation = useNavigation<MainTabsNavigationProp>();
+    const { theme } = useTheme();
     const [fromLocation, setFromLocation] = useState('');
     const [toLocation, setToLocation] = useState('');
     const [date, setDate] = useState(new Date());
@@ -47,77 +52,199 @@ const HomeScreen = () => {
         { id: 3, from: 'Bangalore', to: 'Mysore', date: 'Dec 7', price: 400, driver: 'Amit K.', rating: 4.7, seats: 4 }
     ];
 
+    const styles = StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.colors.background },
+        header: {
+            padding: 20,
+            paddingTop: 60,
+            paddingBottom: 40,
+        },
+        headerTitle: { fontSize: 32, fontWeight: 'bold', color: '#fff', marginBottom: 4 },
+        headerSubtitle: { fontSize: 16, color: '#fff', opacity: 0.9 },
+        searchCard: {
+            margin: 16,
+            marginTop: -30,
+        },
+        searchCardContent: {
+            padding: 20,
+        },
+        inputGroup: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            borderRadius: theme.borderRadius.md,
+            backgroundColor: theme.colors.surface,
+        },
+        iconContainer: {
+            width: 50,
+            height: 50,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        icon: { fontSize: 24 },
+        input: {
+            flex: 1,
+            height: 50,
+            fontSize: 16,
+            color: theme.colors.text,
+            justifyContent: 'center',
+        },
+        inputText: { fontSize: 16, color: theme.colors.text },
+        passengerSelector: {
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingRight: 12,
+        },
+        passengerButton: {
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        passengerButtonText: { fontSize: 24, color: '#fff', fontWeight: 'bold' },
+        passengerCount: { fontSize: 16, color: theme.colors.text, fontWeight: '500' },
+        searchButtonContainer: {
+            marginTop: 8,
+        },
+        popularSection: { padding: 16, paddingTop: 0 },
+        sectionHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 16,
+        },
+        sectionTitle: { fontSize: 22, fontWeight: 'bold', color: theme.colors.text },
+        seeAll: { fontSize: 14, color: theme.colors.primary, fontWeight: '600' },
+        rideCard: {
+            marginBottom: 12,
+        },
+        rideCardContent: {
+            padding: 16,
+        },
+        rideHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
+        },
+        rideRoute: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+        rideFrom: { fontSize: 18, fontWeight: '600', color: theme.colors.text },
+        rideArrow: { fontSize: 18, color: theme.colors.primary, marginHorizontal: 8 },
+        rideTo: { fontSize: 18, fontWeight: '600', color: theme.colors.text },
+        ridePrice: { fontSize: 20, fontWeight: 'bold', color: theme.colors.primary },
+        rideDetails: {
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.borderLight,
+            paddingTop: 12,
+        },
+        rideInfo: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+        rideDate: { fontSize: 14, color: theme.colors.textSecondary },
+        rideSeats: { fontSize: 14, color: theme.colors.textSecondary },
+        driverInfo: { flexDirection: 'row', justifyContent: 'space-between' },
+        driverName: { fontSize: 14, color: theme.colors.textSecondary },
+        driverRating: { fontSize: 14, color: theme.colors.textSecondary },
+    });
+
     return (
         <ScrollView style={styles.container}>
-            <View style={styles.header}>
+            {/* Gradient Header */}
+            <LinearGradient
+                colors={theme.gradients.hero as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.header}
+            >
                 <Text style={styles.headerTitle}>Find a Ride</Text>
                 <Text style={styles.headerSubtitle}>Where are you going today?</Text>
-            </View>
+            </LinearGradient>
 
-            <View style={styles.searchCard}>
-                <View style={styles.inputGroup}>
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.icon}>📍</Text>
+            {/* Glassmorphic Search Card */}
+            <GlassCard style={styles.searchCard} intensity="strong">
+                <View style={styles.searchCardContent}>
+                    <View style={styles.inputGroup}>
+                        <View style={styles.iconContainer}>
+                            <Text style={styles.icon}>📍</Text>
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Leaving from..."
+                            value={fromLocation}
+                            onChangeText={setFromLocation}
+                            placeholderTextColor={theme.colors.textTertiary}
+                        />
                     </View>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Leaving from..."
-                        value={fromLocation}
-                        onChangeText={setFromLocation}
-                        placeholderTextColor="#999"
+
+                    <View style={styles.inputGroup}>
+                        <View style={styles.iconContainer}>
+                            <Text style={styles.icon}>🎯</Text>
+                        </View>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Going to..."
+                            value={toLocation}
+                            onChangeText={setToLocation}
+                            placeholderTextColor={theme.colors.textTertiary}
+                        />
+                    </View>
+
+                    <TouchableOpacity style={styles.inputGroup} onPress={() => setShowDatePicker(true)}>
+                        <View style={styles.iconContainer}>
+                            <Text style={styles.icon}>📅</Text>
+                        </View>
+                        <View style={styles.input}>
+                            <Text style={styles.inputText}>{formatDate(date)}</Text>
+                        </View>
+                    </TouchableOpacity>
+
+                    <CalendarPicker
+                        visible={showDatePicker}
+                        selectedDate={date}
+                        onSelectDate={handleDateChange}
+                        onClose={() => setShowDatePicker(false)}
+                        minimumDate={new Date()}
                     />
-                </View>
 
-                <View style={styles.inputGroup}>
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.icon}>🎯</Text>
+                    <View style={styles.inputGroup}>
+                        <View style={styles.iconContainer}>
+                            <Text style={styles.icon}>👥</Text>
+                        </View>
+                        <View style={styles.passengerSelector}>
+                            <TouchableOpacity onPress={() => setPassengers(Math.max(1, passengers - 1))}>
+                                <LinearGradient
+                                    colors={theme.gradients.primary as any}
+                                    style={styles.passengerButton}
+                                >
+                                    <Text style={styles.passengerButtonText}>−</Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                            <Text style={styles.passengerCount}>{passengers} {passengers === 1 ? 'passenger' : 'passengers'}</Text>
+                            <TouchableOpacity onPress={() => setPassengers(Math.min(8, passengers + 1))}>
+                                <LinearGradient
+                                    colors={theme.gradients.primary as any}
+                                    style={styles.passengerButton}
+                                >
+                                    <Text style={styles.passengerButtonText}>+</Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Going to..."
-                        value={toLocation}
-                        onChangeText={setToLocation}
-                        placeholderTextColor="#999"
-                    />
-                </View>
 
-                <TouchableOpacity style={styles.inputGroup} onPress={() => setShowDatePicker(true)}>
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.icon}>📅</Text>
-                    </View>
-                    <View style={styles.input}>
-                        <Text style={styles.inputText}>{formatDate(date)}</Text>
-                    </View>
-                </TouchableOpacity>
-
-                <CalendarPicker
-                    visible={showDatePicker}
-                    selectedDate={date}
-                    onSelectDate={handleDateChange}
-                    onClose={() => setShowDatePicker(false)}
-                    minimumDate={new Date()}
-                />
-
-                <View style={styles.inputGroup}>
-                    <View style={styles.iconContainer}>
-                        <Text style={styles.icon}>👥</Text>
-                    </View>
-                    <View style={styles.passengerSelector}>
-                        <TouchableOpacity style={styles.passengerButton} onPress={() => setPassengers(Math.max(1, passengers - 1))}>
-                            <Text style={styles.passengerButtonText}>−</Text>
-                        </TouchableOpacity>
-                        <Text style={styles.passengerCount}>{passengers} {passengers === 1 ? 'passenger' : 'passengers'}</Text>
-                        <TouchableOpacity style={styles.passengerButton} onPress={() => setPassengers(Math.min(8, passengers + 1))}>
-                            <Text style={styles.passengerButtonText}>+</Text>
-                        </TouchableOpacity>
+                    <View style={styles.searchButtonContainer}>
+                        <GradientButton
+                            title="🔍 Search Rides"
+                            onPress={handleSearch}
+                            size="large"
+                        />
                     </View>
                 </View>
+            </GlassCard>
 
-                <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-                    <Text style={styles.searchButtonText}>🔍 Search Rides</Text>
-                </TouchableOpacity>
-            </View>
-
+            {/* Popular Rides */}
             <View style={styles.popularSection}>
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>🔥 Popular Rides</Text>
@@ -129,7 +256,6 @@ const HomeScreen = () => {
                 {popularRides.map((ride) => (
                     <TouchableOpacity
                         key={ride.id}
-                        style={styles.rideCard}
                         onPress={() => navigation.navigate('RideDetails', {
                             rideId: ride.id,
                             from: ride.from,
@@ -144,24 +270,28 @@ const HomeScreen = () => {
                             instant: true,
                         })}
                     >
-                        <View style={styles.rideHeader}>
-                            <View style={styles.rideRoute}>
-                                <Text style={styles.rideFrom}>{ride.from}</Text>
-                                <Text style={styles.rideArrow}>→</Text>
-                                <Text style={styles.rideTo}>{ride.to}</Text>
+                        <GlassCard style={styles.rideCard} intensity="medium">
+                            <View style={styles.rideCardContent}>
+                                <View style={styles.rideHeader}>
+                                    <View style={styles.rideRoute}>
+                                        <Text style={styles.rideFrom}>{ride.from}</Text>
+                                        <Text style={styles.rideArrow}>→</Text>
+                                        <Text style={styles.rideTo}>{ride.to}</Text>
+                                    </View>
+                                    <Text style={styles.ridePrice}>₹{ride.price}</Text>
+                                </View>
+                                <View style={styles.rideDetails}>
+                                    <View style={styles.rideInfo}>
+                                        <Text style={styles.rideDate}>📅 {ride.date}</Text>
+                                        <Text style={styles.rideSeats}>💺 {ride.seats} seats</Text>
+                                    </View>
+                                    <View style={styles.driverInfo}>
+                                        <Text style={styles.driverName}>👤 {ride.driver}</Text>
+                                        <Text style={styles.driverRating}>⭐ {ride.rating}</Text>
+                                    </View>
+                                </View>
                             </View>
-                            <Text style={styles.ridePrice}>₹{ride.price}</Text>
-                        </View>
-                        <View style={styles.rideDetails}>
-                            <View style={styles.rideInfo}>
-                                <Text style={styles.rideDate}>📅 {ride.date}</Text>
-                                <Text style={styles.rideSeats}>💺 {ride.seats} seats</Text>
-                            </View>
-                            <View style={styles.driverInfo}>
-                                <Text style={styles.driverName}>👤 {ride.driver}</Text>
-                                <Text style={styles.driverRating}>⭐ {ride.rating}</Text>
-                            </View>
-                        </View>
+                        </GlassCard>
                     </TouchableOpacity>
                 ))}
             </View>
@@ -169,42 +299,5 @@ const HomeScreen = () => {
         </ScrollView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
-    header: { backgroundColor: '#007AFF', padding: 20, paddingTop: 60, paddingBottom: 30 },
-    headerTitle: { fontSize: 32, fontWeight: 'bold', color: '#fff', marginBottom: 4 },
-    headerSubtitle: { fontSize: 16, color: '#fff', opacity: 0.9 },
-    searchCard: { backgroundColor: '#fff', margin: 16, marginTop: -20, padding: 20, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 },
-    inputGroup: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 12, backgroundColor: '#fafafa' },
-    iconContainer: { width: 50, height: 50, justifyContent: 'center', alignItems: 'center' },
-    icon: { fontSize: 24 },
-    input: { flex: 1, height: 50, fontSize: 16, color: '#333', justifyContent: 'center' },
-    inputText: { fontSize: 16, color: '#333' },
-    passengerSelector: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 12 },
-    passengerButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#007AFF', justifyContent: 'center', alignItems: 'center' },
-    passengerButtonText: { fontSize: 24, color: '#fff', fontWeight: 'bold' },
-    passengerCount: { fontSize: 16, color: '#333', fontWeight: '500' },
-    searchButton: { backgroundColor: '#007AFF', padding: 18, borderRadius: 12, alignItems: 'center', marginTop: 8 },
-    searchButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
-    popularSection: { padding: 16, paddingTop: 0 },
-    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-    sectionTitle: { fontSize: 22, fontWeight: 'bold', color: '#333' },
-    seeAll: { fontSize: 14, color: '#007AFF', fontWeight: '600' },
-    rideCard: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
-    rideHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-    rideRoute: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-    rideFrom: { fontSize: 18, fontWeight: '600', color: '#333' },
-    rideArrow: { fontSize: 18, color: '#007AFF', marginHorizontal: 8 },
-    rideTo: { fontSize: 18, fontWeight: '600', color: '#333' },
-    ridePrice: { fontSize: 20, fontWeight: 'bold', color: '#007AFF' },
-    rideDetails: { borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 12 },
-    rideInfo: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-    rideDate: { fontSize: 14, color: '#666' },
-    rideSeats: { fontSize: 14, color: '#666' },
-    driverInfo: { flexDirection: 'row', justifyContent: 'space-between' },
-    driverName: { fontSize: 14, color: '#666' },
-    driverRating: { fontSize: 14, color: '#666' },
-});
 
 export default HomeScreen;

@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 // Import screens
 import SplashScreen from '../screens/SplashScreen';
@@ -52,19 +53,21 @@ const AuthNavigator = () => {
 
 // Main Tabs Navigator
 const MainNavigator = () => {
+    const { theme } = useTheme();
+
     return (
         <MainTabs.Navigator
             screenOptions={{
-                tabBarActiveTintColor: '#007AFF',
-                tabBarInactiveTintColor: '#999',
+                tabBarActiveTintColor: theme.colors.primary,
+                tabBarInactiveTintColor: theme.colors.textTertiary,
                 headerShown: false,
                 tabBarStyle: {
                     paddingBottom: 5,
                     paddingTop: 5,
                     height: 60,
-                    backgroundColor: '#fff',
+                    backgroundColor: theme.colors.surface,
                     borderTopWidth: 1,
-                    borderTopColor: '#e0e0e0',
+                    borderTopColor: theme.colors.border,
                     width: '100%',
                 },
                 tabBarItemStyle: {

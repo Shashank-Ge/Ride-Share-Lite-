@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import RNMapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import { useTheme } from '../../context/ThemeContext';
 
 interface MapViewProps {
     fromLocation: string;
@@ -19,6 +20,8 @@ const MapView: React.FC<MapViewProps> = ({
     routeGeometry,
     stopovers = [],
 }) => {
+    const { theme } = useTheme();
+
     // Default coordinates
     const defaultFrom = fromCoords || { latitude: 28.6139, longitude: 77.2090 }; // Delhi
     const defaultTo = toCoords || { latitude: 19.0760, longitude: 72.8777 }; // Mumbai
@@ -83,7 +86,7 @@ const MapView: React.FC<MapViewProps> = ({
                 {/* Route Line */}
                 <Polyline
                     coordinates={routeCoordinates}
-                    strokeColor="#007AFF"
+                    strokeColor={theme.colors.primary}
                     strokeWidth={4}
                 />
             </RNMapView>

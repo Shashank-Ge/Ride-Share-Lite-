@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
+import GlassCard from '../../components/GlassCard';
 
 const PrivacyScreen = () => {
     const navigation = useNavigation();
+    const { theme } = useTheme();
     const [profileVisible, setProfileVisible] = useState(true);
     const [showPhone, setShowPhone] = useState(false);
     const [showEmail, setShowEmail] = useState(true);
@@ -25,6 +28,27 @@ const PrivacyScreen = () => {
         );
     };
 
+    const styles = StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.colors.background },
+        header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 60, backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+        headerTitle: { fontSize: 18, fontWeight: 'bold', color: theme.colors.text },
+        backButton: { fontSize: 24, color: theme.colors.primary },
+        content: { flex: 1 },
+        section: { marginTop: 20, paddingVertical: 8 },
+        sectionTitle: { fontSize: 14, fontWeight: '600', color: theme.colors.textTertiary, paddingHorizontal: 20, paddingVertical: 8 },
+        settingItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: theme.colors.borderLight },
+        settingInfo: { flex: 1, marginRight: 16 },
+        settingLabel: { fontSize: 16, color: theme.colors.text, marginBottom: 2 },
+        settingDesc: { fontSize: 13, color: theme.colors.textSecondary },
+        menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: theme.colors.borderLight },
+        menuText: { fontSize: 16, color: theme.colors.text },
+        menuArrow: { fontSize: 24, color: theme.colors.border },
+        dangerSection: { marginTop: 20, marginBottom: 40, paddingVertical: 16 },
+        deleteButton: { backgroundColor: theme.colors.error, marginHorizontal: 20, padding: 16, borderRadius: 8, alignItems: 'center' },
+        deleteButtonText: { fontSize: 16, fontWeight: '600', color: '#fff' },
+        deleteWarning: { fontSize: 12, color: theme.colors.textSecondary, textAlign: 'center', marginTop: 8, paddingHorizontal: 20 },
+    });
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -36,7 +60,7 @@ const PrivacyScreen = () => {
             </View>
 
             <ScrollView style={styles.content}>
-                <View style={styles.section}>
+                <GlassCard style={styles.section} intensity="light">
                     <Text style={styles.sectionTitle}>Profile Visibility</Text>
 
                     <View style={styles.settingItem}>
@@ -47,7 +71,7 @@ const PrivacyScreen = () => {
                         <Switch
                             value={profileVisible}
                             onValueChange={setProfileVisible}
-                            trackColor={{ false: '#e0e0e0', true: '#007AFF' }}
+                            trackColor={{ false: theme.colors.borderLight, true: theme.colors.primary }}
                         />
                     </View>
 
@@ -59,7 +83,7 @@ const PrivacyScreen = () => {
                         <Switch
                             value={showPhone}
                             onValueChange={setShowPhone}
-                            trackColor={{ false: '#e0e0e0', true: '#007AFF' }}
+                            trackColor={{ false: theme.colors.borderLight, true: theme.colors.primary }}
                         />
                     </View>
 
@@ -71,12 +95,12 @@ const PrivacyScreen = () => {
                         <Switch
                             value={showEmail}
                             onValueChange={setShowEmail}
-                            trackColor={{ false: '#e0e0e0', true: '#007AFF' }}
+                            trackColor={{ false: theme.colors.borderLight, true: theme.colors.primary }}
                         />
                     </View>
-                </View>
+                </GlassCard>
 
-                <View style={styles.section}>
+                <GlassCard style={styles.section} intensity="light">
                     <Text style={styles.sectionTitle}>Data & Privacy</Text>
 
                     <TouchableOpacity style={styles.menuItem}>
@@ -93,9 +117,9 @@ const PrivacyScreen = () => {
                         <Text style={styles.menuText}>Terms of Service</Text>
                         <Text style={styles.menuArrow}>›</Text>
                     </TouchableOpacity>
-                </View>
+                </GlassCard>
 
-                <View style={styles.dangerSection}>
+                <GlassCard style={styles.dangerSection} intensity="light">
                     <Text style={styles.sectionTitle}>Danger Zone</Text>
 
                     <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
@@ -104,31 +128,10 @@ const PrivacyScreen = () => {
                     <Text style={styles.deleteWarning}>
                         This will permanently delete your account and all associated data
                     </Text>
-                </View>
+                </GlassCard>
             </ScrollView>
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 60, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
-    headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-    backButton: { fontSize: 24, color: '#007AFF' },
-    content: { flex: 1 },
-    section: { backgroundColor: '#fff', marginTop: 20, paddingVertical: 8 },
-    sectionTitle: { fontSize: 14, fontWeight: '600', color: '#999', paddingHorizontal: 20, paddingVertical: 8 },
-    settingItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f5f5f5' },
-    settingInfo: { flex: 1, marginRight: 16 },
-    settingLabel: { fontSize: 16, color: '#333', marginBottom: 2 },
-    settingDesc: { fontSize: 13, color: '#666' },
-    menuItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#f5f5f5' },
-    menuText: { fontSize: 16, color: '#333' },
-    menuArrow: { fontSize: 24, color: '#ccc' },
-    dangerSection: { backgroundColor: '#fff', marginTop: 20, marginBottom: 40, paddingVertical: 16 },
-    deleteButton: { backgroundColor: '#FF3B30', marginHorizontal: 20, padding: 16, borderRadius: 8, alignItems: 'center' },
-    deleteButtonText: { fontSize: 16, fontWeight: '600', color: '#fff' },
-    deleteWarning: { fontSize: 12, color: '#666', textAlign: 'center', marginTop: 8, paddingHorizontal: 20 },
-});
 
 export default PrivacyScreen;

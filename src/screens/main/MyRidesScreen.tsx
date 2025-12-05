@@ -9,7 +9,9 @@ import {
     Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import {
     fetchPassengerBookings,
     fetchDriverBookings,
@@ -18,10 +20,12 @@ import {
     Booking,
 } from '../../services/database';
 import { sendBookingConfirmationNotification, sendBookingRejectedNotification } from '../../services/notifications';
+import GlassCard from '../../components/GlassCard';
 
 const MyRidesScreen = () => {
     const { session } = useAuth();
     const navigation = useNavigation();
+    const { theme } = useTheme();
     const [activeTab, setActiveTab] = useState<'bookings' | 'rides'>('bookings');
     const [passengerBookings, setPassengerBookings] = useState<Booking[]>([]);
     const [driverBookings, setDriverBookings] = useState<Booking[]>([]);
@@ -154,7 +158,7 @@ const MyRidesScreen = () => {
         const ride = booking.ride as any;
 
         return (
-            <View key={booking.id} style={styles.bookingCard}>
+            <GlassCard key={booking.id} style={styles.bookingCard} intensity="light">
                 <View style={styles.cardHeader}>
                     <View style={styles.routeInfo}>
                         <Text style={styles.route}>
@@ -205,7 +209,7 @@ const MyRidesScreen = () => {
                         <Text style={styles.messageButtonText}>💬 Message Driver</Text>
                     </TouchableOpacity>
                 )}
-            </View>
+            </GlassCard>
         );
     };
 
@@ -214,7 +218,7 @@ const MyRidesScreen = () => {
         const ride = booking.ride as any;
 
         return (
-            <View key={booking.id} style={styles.bookingCard}>
+            <GlassCard key={booking.id} style={styles.bookingCard} intensity="light">
                 <View style={styles.cardHeader}>
                     <View style={styles.routeInfo}>
                         <Text style={styles.route}>
@@ -256,7 +260,12 @@ const MyRidesScreen = () => {
                             style={styles.acceptButton}
                             onPress={() => handleAcceptBooking(booking)}
                         >
-                            <Text style={styles.acceptButtonText}>Accept</Text>
+                            <LinearGradient
+                                colors={theme.gradients.success as any}
+                                style={styles.acceptButton}
+                            >
+                                <Text style={styles.acceptButtonText}>Accept</Text>
+                            </LinearGradient>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -270,19 +279,66 @@ const MyRidesScreen = () => {
                             ride: ride,
                         })}
                     >
-                        <Text style={styles.messageButtonText}>💬 Message Passenger</Text>
+                        <LinearGradient
+                            colors={theme.gradients.primary as any}
+                            style={styles.messageButton}
+                        >
+                            <Text style={styles.messageButtonText}>💬 Message Passenger</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
                 )}
-            </View>
+            </GlassCard>
         );
     };
+
+    const styles = StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.colors.background },
+        header: { padding: 20, paddingTop: 60, paddingBottom: 20 },
+        headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
+        tabContainer: { flexDirection: 'row', backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+        tab: { flex: 1, paddingVertical: 16, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+        activeTab: { borderBottomColor: theme.colors.primary },
+        tabText: { fontSize: 16, color: theme.colors.textSecondary, fontWeight: '500' },
+        activeTabText: { color: theme.colors.primary, fontWeight: 'bold' },
+        content: { flex: 1, padding: 16 },
+        bookingCard: { marginBottom: 16 },
+        cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.borderLight },
+        routeInfo: { flex: 1 },
+        route: { fontSize: 18, fontWeight: 'bold', color: theme.colors.text, marginBottom: 4 },
+        dateTime: { fontSize: 13, color: theme.colors.textSecondary },
+        statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, alignSelf: 'flex-start' },
+        statusText: { fontSize: 12, fontWeight: 'bold', color: '#fff' },
+        cardDetails: { marginBottom: 12, padding: 16 },
+        detailRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+        detailLabel: { fontSize: 14, color: theme.colors.textSecondary },
+        detailValue: { fontSize: 14, fontWeight: '600', color: theme.colors.text },
+        priceValue: { fontSize: 16, fontWeight: 'bold', color: theme.colors.primary },
+        actionButtons: { flexDirection: 'row', gap: 12, padding: 16, paddingTop: 0 },
+        rejectButton: { flex: 1, padding: 12, borderRadius: 8, backgroundColor: theme.colors.surfaceVariant, alignItems: 'center' },
+        rejectButtonText: { fontSize: 14, fontWeight: '600', color: theme.colors.error },
+        acceptButton: { flex: 1, padding: 12, borderRadius: 8, alignItems: 'center' },
+        acceptButtonText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+        cancelButton: { padding: 12, borderRadius: 8, backgroundColor: theme.colors.surfaceVariant, alignItems: 'center', margin: 16, marginTop: 0 },
+        cancelButtonText: { fontSize: 14, fontWeight: '600', color: theme.colors.error },
+        messageButton: { padding: 12, borderRadius: 8, alignItems: 'center', margin: 16, marginTop: 0 },
+        messageButtonText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+        emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 },
+        emptyIcon: { fontSize: 64, marginBottom: 16 },
+        emptyTitle: { fontSize: 20, fontWeight: 'bold', color: theme.colors.text, marginBottom: 8 },
+        emptyText: { fontSize: 14, color: theme.colors.textSecondary, textAlign: 'center', paddingHorizontal: 40 },
+    });
 
     return (
         <View style={styles.container}>
             {/* Header */}
-            <View style={styles.header}>
+            <LinearGradient
+                colors={theme.gradients.primary as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.header}
+            >
                 <Text style={styles.headerTitle}>My Rides</Text>
-            </View>
+            </LinearGradient>
 
             {/* Tabs */}
             <View style={styles.tabContainer}>
@@ -337,41 +393,5 @@ const MyRidesScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
-    header: { backgroundColor: '#007AFF', padding: 20, paddingTop: 60, paddingBottom: 20 },
-    headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
-    tabContainer: { flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
-    tab: { flex: 1, paddingVertical: 16, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-    activeTab: { borderBottomColor: '#007AFF' },
-    tabText: { fontSize: 16, color: '#666', fontWeight: '500' },
-    activeTabText: { color: '#007AFF', fontWeight: 'bold' },
-    content: { flex: 1, padding: 16 },
-    bookingCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
-    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-    routeInfo: { flex: 1 },
-    route: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 4 },
-    dateTime: { fontSize: 13, color: '#666' },
-    statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, alignSelf: 'flex-start' },
-    statusText: { fontSize: 12, fontWeight: 'bold', color: '#fff' },
-    cardDetails: { marginBottom: 12 },
-    detailRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-    detailLabel: { fontSize: 14, color: '#666' },
-    detailValue: { fontSize: 14, fontWeight: '600', color: '#333' },
-    priceValue: { fontSize: 16, fontWeight: 'bold', color: '#007AFF' },
-    actionButtons: { flexDirection: 'row', gap: 12 },
-    rejectButton: { flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#f0f0f0', alignItems: 'center' },
-    rejectButtonText: { fontSize: 14, fontWeight: '600', color: '#FF3B30' },
-    acceptButton: { flex: 1, padding: 12, borderRadius: 8, backgroundColor: '#34C759', alignItems: 'center' },
-    acceptButtonText: { fontSize: 14, fontWeight: '600', color: '#fff' },
-    cancelButton: { padding: 12, borderRadius: 8, backgroundColor: '#f0f0f0', alignItems: 'center' },
-    cancelButtonText: { fontSize: 14, fontWeight: '600', color: '#FF3B30' },
-    messageButton: { padding: 12, borderRadius: 8, backgroundColor: '#007AFF', alignItems: 'center', marginTop: 8 },
-    messageButtonText: { fontSize: 14, fontWeight: '600', color: '#fff' },
-    emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 },
-    emptyIcon: { fontSize: 64, marginBottom: 16 },
-    emptyTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 8 },
-    emptyText: { fontSize: 14, color: '#666', textAlign: 'center', paddingHorizontal: 40 },
-});
 
 export default MyRidesScreen;

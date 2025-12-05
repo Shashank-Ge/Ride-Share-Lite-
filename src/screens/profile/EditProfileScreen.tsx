@@ -10,12 +10,16 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { fetchProfile, updateProfile, Profile } from '../../services/database';
+import GradientButton from '../../components/GradientButton';
 
 const EditProfileScreen = () => {
     const navigation = useNavigation();
     const { user } = useAuth();
+    const { theme } = useTheme();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [fullName, setFullName] = useState('');
@@ -66,10 +70,25 @@ const EditProfileScreen = () => {
         }
     };
 
+    const styles = StyleSheet.create({
+        container: { flex: 1, backgroundColor: theme.colors.background },
+        loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+        header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 60, backgroundColor: theme.colors.surface, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+        headerTitle: { fontSize: 18, fontWeight: 'bold', color: theme.colors.text },
+        cancelButton: { fontSize: 16, color: theme.colors.primary },
+        saveButton: { fontSize: 16, color: theme.colors.primary, fontWeight: '600' },
+        saveButtonDisabled: { color: theme.colors.textTertiary },
+        content: { flex: 1, padding: 16 },
+        inputGroup: { marginBottom: 24 },
+        label: { fontSize: 14, fontWeight: '600', color: theme.colors.text, marginBottom: 8 },
+        input: { borderWidth: 1, borderColor: theme.colors.border, borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: theme.colors.surface, color: theme.colors.text },
+        textArea: { height: 100, textAlignVertical: 'top' },
+    });
+
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007AFF" />
+                <ActivityIndicator size="large" color={theme.colors.primary} />
             </View>
         );
     }
@@ -128,20 +147,5 @@ const EditProfileScreen = () => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
-    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 60, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e0e0e0' },
-    headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-    cancelButton: { fontSize: 16, color: '#007AFF' },
-    saveButton: { fontSize: 16, color: '#007AFF', fontWeight: '600' },
-    saveButtonDisabled: { color: '#999' },
-    content: { flex: 1, padding: 16 },
-    inputGroup: { marginBottom: 24 },
-    label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
-    input: { borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#fff' },
-    textArea: { height: 100, textAlignVertical: 'top' },
-});
 
 export default EditProfileScreen;

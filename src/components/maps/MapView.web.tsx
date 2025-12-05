@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import { useTheme } from '../../context/ThemeContext';
 
 interface MapViewProps {
     fromLocation: string;
@@ -20,6 +21,8 @@ const MapView: React.FC<MapViewProps> = ({
     routeGeometry,
     stopovers = [],
 }) => {
+    const { theme } = useTheme();
+
     useEffect(() => {
         // Load Leaflet CSS dynamically
         if (typeof document !== 'undefined') {
@@ -91,7 +94,7 @@ const MapView: React.FC<MapViewProps> = ({
                 {/* Route Line */}
                 <Polyline
                     positions={routeCoordinates}
-                    color="#007AFF"
+                    color={theme.colors.primary}
                     weight={4}
                     opacity={0.7}
                 />
