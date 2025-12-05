@@ -1,32 +1,33 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { Platform } from 'react-native';
 import { AuthProvider } from './src/context/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
-// import { requestNotificationPermissions, setupNotificationListeners } from './src/services/notifications';
+import { requestNotificationPermissions, setupNotificationListeners } from './src/services/notifications';
 
 export default function App() {
-  // Temporarily commented out to debug blank screen
-  // useEffect(() => {
-  //   // Request notification permissions on app start
-  //   requestNotificationPermissions();
+  useEffect(() => {
+    // Only initialize notifications on mobile (not web)
+    if (Platform.OS !== 'web') {
+      requestNotificationPermissions();
 
-  //   // Setup notification listeners
-  //   const cleanup = setupNotificationListeners(
-  //     (notification) => {
-  //       console.log('📬 Notification received:', notification);
-  //     },
-  //     (response) => {
-  //       console.log('👆 Notification tapped:', response);
-  //       // TODO: Navigate based on notification type
-  //       const data = response.notification.request.content.data;
-  //       if (data?.type === 'new_message') {
-  //         // Navigate to chat
-  //       }
-  //     }
-  //   );
+      const cleanup = setupNotificationListeners(
+        (notification) => {
+          console.log('📬 Notification received:', notification);
+        },
+        (response) => {
+          console.log('👆 Notification tapped:', response);
+          // TODO: Navigate based on notification type
+          const data = response.notification.request.content.data;
+          if (data?.type === 'new_message') {
+            // Navigate to chat
+          }
+        }
+      );
 
-  //   return cleanup;
-  // }, []);
+      return cleanup;
+    }
+  }, []);
 
   return (
     <AuthProvider>
