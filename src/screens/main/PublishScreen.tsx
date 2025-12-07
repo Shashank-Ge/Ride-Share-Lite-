@@ -597,20 +597,35 @@ const PublishScreen = () => {
                 )}
                 {currentStep < 4 ? (
                     <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-                        <Text style={styles.nextButtonText}>Next →</Text>
+                        <LinearGradient
+                            colors={theme.gradients.primary as any}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={{ padding: 16, borderRadius: 8, alignItems: 'center', flex: 1 }}
+                        >
+                            <Text style={styles.nextButtonText}>Next →</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
                 ) : (
                     <TouchableOpacity
-                        style={[
-                            styles.publishButton,
-                            (isPublishing || ridePublished) && styles.publishButtonDisabled
-                        ]}
+                        style={styles.publishButton}
                         onPress={handlePublish}
                         disabled={isPublishing || ridePublished}
                     >
-                        <Text style={styles.publishButtonText}>
-                            {ridePublished ? '✓ Ride Published' : isPublishing ? 'Publishing...' : '🚀 Publish Ride'}
-                        </Text>
+                        <LinearGradient
+                            colors={
+                                ridePublished || isPublishing
+                                    ? ['#666', '#666']
+                                    : (theme.gradients.primary as any)
+                            }
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={{ padding: 16, borderRadius: 8, alignItems: 'center', flex: 1 }}
+                        >
+                            <Text style={styles.publishButtonText}>
+                                {ridePublished ? '✓ Ride Published' : isPublishing ? 'Publishing...' : '🚀 Publish Ride'}
+                            </Text>
+                        </LinearGradient>
                     </TouchableOpacity>
                 )}
             </View>
