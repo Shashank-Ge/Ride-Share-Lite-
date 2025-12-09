@@ -223,7 +223,10 @@ const AppNavigator = () => {
     }
 
     return (
-        <NavigationContainer linking={linking}>
+        <NavigationContainer
+            linking={linking}
+            key={session ? 'authenticated' : 'unauthenticated'}
+        >
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
                 {!session ? (
                     <RootStack.Screen name="Auth" component={AuthNavigator} />

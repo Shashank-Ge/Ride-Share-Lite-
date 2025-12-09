@@ -9,6 +9,7 @@ import {
     Modal,
     Alert,
     ActivityIndicator,
+    Platform,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,7 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { createBooking, updateRideSeats, fetchRideById, Ride } from '../../services/database';
 import MapView from '../../components/maps/MapView';
-import { sendBookingConfirmationNotification, scheduleRideReminder } from '../../services/notifications';
+import { sendBookingConfirmationNotification, scheduleRideReminder, sendNewBookingRequestNotification, sendNewBookingRequestPush } from '../../services/notifications';
 import GlassCard from '../../components/GlassCard';
 import GradientButton from '../../components/GradientButton';
 import { getCityCoordinates, extractCityName } from '../../utils/cityCoordinates';
@@ -196,13 +197,16 @@ const RideDetailsScreen = () => {
 
             const totalPrice = rideDetails.price * selectedSeats;
             const bookingStatus = rideDetails.instant ? 'confirmed' : 'pending';
+            const isInstantBooking = rideDetails.instant;
 
             // Validate ride ID
             if (!rideDetails.id || rideDetails.id === 1) {
-                Alert.alert(
-                    'Invalid Ride',
-                    'This ride cannot be booked. Please select a ride from the search results.'
-                );
+                const alertMessage = 'This ride cannot be booked. Please select a ride from the search results.';
+                if (Platform.OS === 'web') {
+                    window.alert(alertMessage);
+                } else {
+                    Alert.alert('Invalid Ride', alertMessage);
+                }
                 return;
             }
 
@@ -224,22 +228,23 @@ const RideDetailsScreen = () => {
                 const seatsUpdated = await updateRideSeats(String(rideDetails.id), selectedSeats);
                 console.log('Seats updated:', seatsUpdated);
 
-                // Send notifications
-                try {
-                    await sendBookingConfirmationNotification({
-                        from: rideDetails.from,
-                        to: rideDetails.to,
-                        date: rideDetails.date,
-                        time: rideDetails.departureTime,
-                    });
-                } catch (notifError) {
-                    console.log('Notification error (non-critical):', notifError);
-                }
-
-                // Schedule ride reminder (1 hour before departure)
-                if (bookingStatus === 'confirmed') {
+                // Send notifications based on booking type
+                if (isInstantBooking) {
+                    // Instant booking - send confirmation to passenger
+                    console.log('⚡ Instant booking - sending confirmation notification...');
                     try {
-                        // Create a Date object for the ride (simplified - using today's date with departure time)
+                        await sendBookingConfirmationNotification({
+                            from: rideDetails.from,
+                            to: rideDetails.to,
+                            date: rideDetails.date,
+                            time: rideDetails.departureTime,
+                        });
+                    } catch (notifError) {
+                        console.log('Notification error (non-critical):', notifError);
+                    }
+
+                    // Schedule ride reminder (1 hour before departure)
+                    try {
                         const rideDateObj = new Date();
                         await scheduleRideReminder(
                             {
@@ -252,29 +257,103 @@ const RideDetailsScreen = () => {
                     } catch (reminderError) {
                         console.log('Reminder scheduling error (non-critical):', reminderError);
                     }
+                } else {
+                    // Request-based booking - notify driver about new request
+                    console.log('📨 Request-based booking - notifying driver...');
+                    try {
+                        const passengerName = session?.user?.email?.split('@')[0] || 'A passenger';
+                        const route = `${rideDetails.from} → ${rideDetails.to}`;
+
+                        // Send local notification
+                        await sendNewBookingRequestNotification(
+                            passengerName,
+                            selectedSeats,
+                            route
+                        );
+
+                        // Send push notification to driver
+                        if (rideData?.driver_id) {
+                            await sendNewBookingRequestPush(
+                                rideData.driver_id,
+                                passengerName,
+                                selectedSeats,
+                                route
+                            );
+                        }
+
+                        console.log('✅ Driver notification sent');
+                    } catch (notifError) {
+                        console.log('Driver notification error (non-critical):', notifError);
+                    }
                 }
 
                 setShowBookingModal(false);
                 console.log('✅ Booking successful!');
-                Alert.alert(
-                    'Booking Successful! 🎉',
-                    `Your ${bookingStatus === 'confirmed' ? 'booking is confirmed' : 'booking request has been sent'}!\n\nRoute: ${rideDetails.from} → ${rideDetails.to}\nSeats: ${selectedSeats}\nTotal: ₹${totalPrice}`,
-                    [
-                        {
-                            text: 'View My Bookings',
-                            onPress: () => navigation.navigate('MyRides'),
-                        },
-                        { text: 'OK' },
-                    ]
-                );
+
+                // Reload ride data to show updated seat count
+                console.log('🔄 Reloading ride data to show updated seats...');
+                if (params.rideId) {
+                    const updatedRideData = await fetchRideById(params.rideId.toString());
+                    if (updatedRideData) {
+                        setRideData(updatedRideData);
+                        console.log('✅ Ride data reloaded. New available seats:', updatedRideData.available_seats);
+                    }
+                }
+
+                // Show appropriate success message
+                const successTitle = isInstantBooking ? 'Booking Confirmed! 🎉' : 'Request Sent! 📨';
+                const successMessage = isInstantBooking
+                    ? `Your booking is confirmed!\n\nRoute: ${rideDetails.from} → ${rideDetails.to}\nDate: ${rideDetails.date}\nTime: ${rideDetails.departureTime}\nSeats: ${selectedSeats}\nTotal: ₹${totalPrice}\n\nThe driver will contact you soon.`
+                    : `Your booking request has been sent to the driver!\n\nRoute: ${rideDetails.from} → ${rideDetails.to}\nDate: ${rideDetails.date}\nTime: ${rideDetails.departureTime}\nSeats: ${selectedSeats}\nTotal: ₹${totalPrice}\n\nYou'll be notified once the driver accepts your request.`;
+
+                if (Platform.OS === 'web') {
+                    window.alert(`${successTitle}\n\n${successMessage}`);
+                    (navigation as any).navigate('MyRides');
+                } else {
+                    Alert.alert(
+                        successTitle,
+                        successMessage,
+                        [
+                            {
+                                text: 'View My Bookings',
+                                onPress: () => (navigation as any).navigate('MyRides'),
+                            },
+                            { text: 'OK' },
+                        ]
+                    );
+                }
             } else {
                 console.error('❌ Booking creation failed - no booking returned');
-                Alert.alert('Error', 'Failed to create booking. Please try again.');
+                const errorMessage = 'Failed to create booking. Please try again.';
+                if (Platform.OS === 'web') {
+                    window.alert(`Error: ${errorMessage}`);
+                } else {
+                    Alert.alert('Error', errorMessage);
+                }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('💥 Error creating booking:', error);
             console.error('Error details:', JSON.stringify(error, null, 2));
-            Alert.alert('Error', `An error occurred while booking the ride. Check console for details.`);
+            console.error('Error message:', error?.message);
+            console.error('Error code:', error?.code);
+
+            let errorMessage = 'An error occurred while booking the ride.';
+
+            // Provide more specific error messages
+            if (error?.code === '23505') {
+                // Duplicate booking - user has already booked this ride
+                errorMessage = 'You have already booked this ride! Please check your "My Rides" tab to view your existing booking.';
+            } else if (error?.code === 'PGRST116') {
+                errorMessage = 'Database error: Please check if all required fields are provided.';
+            } else if (error?.message) {
+                errorMessage = error.message;
+            }
+
+            if (Platform.OS === 'web') {
+                window.alert(`Error: ${errorMessage}`);
+            } else {
+                Alert.alert('Booking Error', errorMessage);
+            }
         } finally {
             setIsBooking(false);
         }
@@ -361,10 +440,11 @@ const RideDetailsScreen = () => {
         totalLabelModal: { fontSize: 16, fontWeight: 'bold', color: theme.colors.text },
         totalAmountModal: { fontSize: 20, fontWeight: 'bold', color: theme.colors.primary },
         modalButtons: { flexDirection: 'row', gap: 12 },
-        cancelButton: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border },
+        cancelButton: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
         cancelButtonText: { fontSize: 16, fontWeight: '600', color: theme.colors.text },
-        confirmButton: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center' },
+        confirmButton: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center', backgroundColor: theme.colors.primary },
         confirmButtonText: { fontSize: 16, fontWeight: 'bold', color: '#fff' },
+        confirmButtonDisabled: { opacity: 0.5 },
         // Additional missing styles
         section: { marginTop: 16, paddingHorizontal: 16 },
         driverHeader: { flexDirection: 'row', marginBottom: 12 },
@@ -404,11 +484,6 @@ const RideDetailsScreen = () => {
         bookingTypeInfo: { backgroundColor: theme.colors.primary + '10', padding: 12, borderRadius: 8, marginBottom: 24 },
         bookingTypeText: { fontSize: 13, color: theme.colors.text, textAlign: 'center' },
         modalActions: { flexDirection: 'row', gap: 12 },
-        cancelButton: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surface },
-        cancelButtonText: { fontSize: 16, fontWeight: '600', color: theme.colors.text },
-        confirmButton: { flex: 1, padding: 16, borderRadius: 12, alignItems: 'center', backgroundColor: theme.colors.primary },
-        confirmButtonText: { fontSize: 16, fontWeight: 'bold', color: '#fff' },
-        confirmButtonDisabled: { opacity: 0.5 },
         modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
         modalContent: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24 },
         modalTitle: { fontSize: 24, fontWeight: 'bold', color: theme.colors.text, marginBottom: 8, textAlign: 'center' },
