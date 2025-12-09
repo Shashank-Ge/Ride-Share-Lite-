@@ -22,7 +22,13 @@ import {
     Booking,
     Ride,
 } from '../../services/database';
-import { sendBookingConfirmationNotification, sendBookingRejectedNotification } from '../../services/notifications';
+import { sendBookingConfirmationNotification, sendBookingRejectedNotification, sendBookingConfirmedPush, sendBookingRejectedPush } from '../../services/notifications';
+import {
+    subscribeToPassengerBookings,
+    subscribeToDriverBookings,
+    subscribeToDriverRides,
+    unsubscribeChannel
+} from '../../services/realtimeService';
 import GlassCard from '../../components/GlassCard';
 
 const MyRidesScreen = () => {
@@ -39,6 +45,42 @@ const MyRidesScreen = () => {
     useEffect(() => {
         loadData();
     }, [activeTab]);
+
+    // Real-time subscriptions
+    useEffect(() => {
+        if (!session?.user?.id) return;
+
+        console.log('📡 Setting up real-time subscriptions for tab:', activeTab);
+        let channel: any;
+
+        if (activeTab === 'bookings') {
+            // Subscribe to passenger bookings
+            channel = subscribeToPassengerBookings(session.user.id, (payload) => {
+                console.log('📡 Passenger booking updated, reloading data');
+                loadData();
+            });
+        } else if (activeTab === 'rides') {
+            // Subscribe to driver's published rides
+            channel = subscribeToDriverRides(session.user.id, (payload) => {
+                console.log('📡 Driver ride updated, reloading data');
+                loadData();
+            });
+        } else if (activeTab === 'requests') {
+            // Subscribe to driver booking requests
+            channel = subscribeToDriverBookings(session.user.id, (payload) => {
+                console.log('📡 Driver booking request updated, reloading data');
+                loadData();
+            });
+        }
+
+        // Cleanup subscription on unmount or tab change
+        return () => {
+            if (channel) {
+                console.log('📡 Cleaning up real-time subscription');
+                unsubscribeChannel(channel);
+            }
+        };
+    }, [session?.user?.id, activeTab]);
 
     const loadData = async () => {
         if (!session?.user?.id) {
@@ -81,74 +123,157 @@ const MyRidesScreen = () => {
     };
 
     const handleAcceptBooking = async (booking: Booking) => {
-        Alert.alert(
-            'Accept Booking',
-            `Accept booking from ${booking.passenger?.full_name}?`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Accept',
-                    style: 'default',
-                    onPress: async () => {
-                        try {
-                            const result = await updateBookingStatus(booking.id, 'confirmed');
+        const confirmMessage = `Accept booking from ${booking.passenger?.full_name}?`;
 
-                            if (result) {
-                                const ride = booking.ride as any;
+        const proceedWithAccept = async () => {
+            try {
+                console.log('✅ Driver accepting booking:', booking.id);
+                const result = await updateBookingStatus(booking.id, 'confirmed');
 
-                                try {
-                                    await sendBookingConfirmationNotification({
-                                        from: ride?.from_location || '',
-                                        to: ride?.to_location || '',
-                                        date: ride?.departure_date || '',
-                                        time: ride?.departure_time || '',
-                                    });
-                                } catch (notifError) {
-                                    console.log('Notification error:', notifError);
+                if (result) {
+                    const ride = booking.ride as any;
+                    console.log('📨 Sending approval notification to passenger...');
+
+                    try {
+                        // Send local notification
+                        await sendBookingConfirmationNotification({
+                            from: ride?.from_location || '',
+                            to: ride?.to_location || '',
+                            date: ride?.departure_date || '',
+                            time: ride?.departure_time || '',
+                        });
+
+                        // Send push notification to passenger
+                        if (booking.passenger_id) {
+                            await sendBookingConfirmedPush(
+                                booking.passenger_id,
+                                {
+                                    from: ride?.from_location || '',
+                                    to: ride?.to_location || '',
+                                    date: new Date(ride?.departure_date).toLocaleDateString() || '',
+                                    time: ride?.departure_time || '',
                                 }
-
-                                Alert.alert('Success', 'Booking accepted successfully!');
-                                loadData();
-                            } else {
-                                Alert.alert('Error', 'Failed to accept booking.');
-                            }
-                        } catch (error) {
-                            console.error('Error:', error);
-                            Alert.alert('Error', 'An error occurred.');
+                            );
                         }
+
+                        console.log('✅ Approval notification sent to passenger');
+                    } catch (notifError) {
+                        console.log('⚠️ Notification error (non-critical):', notifError);
+                    }
+
+                    const successMessage = 'Booking accepted successfully! The passenger has been notified.';
+                    if (Platform.OS === 'web') {
+                        window.alert(successMessage);
+                    } else {
+                        Alert.alert('Success', successMessage);
+                    }
+                    loadData();
+                } else {
+                    const errorMessage = 'Failed to accept booking. Please try again.';
+                    if (Platform.OS === 'web') {
+                        window.alert(`Error: ${errorMessage}`);
+                    } else {
+                        Alert.alert('Error', errorMessage);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error accepting booking:', error);
+                const errorMessage = 'An error occurred while accepting the booking.';
+                if (Platform.OS === 'web') {
+                    window.alert(`Error: ${errorMessage}`);
+                } else {
+                    Alert.alert('Error', errorMessage);
+                }
+            }
+        };
+
+        if (Platform.OS === 'web') {
+            if (window.confirm(`Accept Booking\n\n${confirmMessage}`)) {
+                await proceedWithAccept();
+            }
+        } else {
+            Alert.alert(
+                'Accept Booking',
+                confirmMessage,
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Accept',
+                        style: 'default',
+                        onPress: proceedWithAccept,
                     },
-                },
-            ]
-        );
+                ]
+            );
+        }
     };
 
     const handleRejectBooking = async (booking: Booking) => {
-        Alert.alert(
-            'Reject Booking',
-            `Reject booking from ${booking.passenger?.full_name}?`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Reject',
-                    style: 'destructive',
-                    onPress: async () => {
-                        const result = await updateBookingStatus(booking.id, 'rejected');
-                        if (result) {
-                            // Send notification to passenger
-                            const ride = booking.ride as any;
-                            await sendBookingRejectedNotification({
-                                from: ride?.from_location || '',
-                                to: ride?.to_location || '',
-                                date: ride?.departure_date || '',
-                            });
+        const confirmMessage = `Reject booking from ${booking.passenger?.full_name}?`;
 
-                            Alert.alert('Booking Rejected', 'The passenger has been notified.');
-                            loadData();
-                        }
+        const proceedWithReject = async () => {
+            try {
+                console.log('❌ Driver rejecting booking:', booking.id);
+                const result = await updateBookingStatus(booking.id, 'rejected');
+
+                if (result) {
+                    const ride = booking.ride as any;
+                    console.log('📨 Sending rejection notification to passenger...');
+
+                    try {
+                        await sendBookingRejectedNotification({
+                            from: ride?.from_location || '',
+                            to: ride?.to_location || '',
+                            date: ride?.departure_date || '',
+                        });
+                        console.log('✅ Rejection notification sent to passenger');
+                    } catch (notifError) {
+                        console.log('⚠️ Notification error (non-critical):', notifError);
+                    }
+
+                    const successMessage = 'Booking rejected. The passenger has been notified.';
+                    if (Platform.OS === 'web') {
+                        window.alert(successMessage);
+                    } else {
+                        Alert.alert('Booking Rejected', successMessage);
+                    }
+                    loadData();
+                } else {
+                    const errorMessage = 'Failed to reject booking. Please try again.';
+                    if (Platform.OS === 'web') {
+                        window.alert(`Error: ${errorMessage}`);
+                    } else {
+                        Alert.alert('Error', errorMessage);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error rejecting booking:', error);
+                const errorMessage = 'An error occurred while rejecting the booking.';
+                if (Platform.OS === 'web') {
+                    window.alert(`Error: ${errorMessage}`);
+                } else {
+                    Alert.alert('Error', errorMessage);
+                }
+            }
+        };
+
+        if (Platform.OS === 'web') {
+            if (window.confirm(`Reject Booking\n\n${confirmMessage}`)) {
+                await proceedWithReject();
+            }
+        } else {
+            Alert.alert(
+                'Reject Booking',
+                confirmMessage,
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Reject',
+                        style: 'destructive',
+                        onPress: proceedWithReject,
                     },
-                },
-            ]
-        );
+                ]
+            );
+        }
     };
 
     const handleCancelBooking = async (booking: Booking) => {

@@ -31,6 +31,7 @@ import { RootStackParamList, AuthStackParamList, MainTabsParamList } from '../ty
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTabs = createBottomTabNavigator<MainTabsParamList>();
+const MainStack = createNativeStackNavigator();
 
 // Auth Stack Navigator
 const AuthNavigator = () => {
@@ -51,8 +52,8 @@ const AuthNavigator = () => {
     );
 };
 
-// Main Tabs Navigator
-const MainNavigator = () => {
+// Bottom Tabs Navigator (Only visible tabs)
+const TabsNavigator = () => {
     const { theme } = useTheme();
 
     return (
@@ -68,9 +69,11 @@ const MainNavigator = () => {
                     backgroundColor: theme.colors.surface,
                     borderTopWidth: 1,
                     borderTopColor: theme.colors.border,
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                 },
                 tabBarItemStyle: {
-                    flex: 1,
                     justifyContent: 'center',
                     alignItems: 'center',
                 },
@@ -124,63 +127,56 @@ const MainNavigator = () => {
                     tabBarIcon: ({ color }) => <TabIcon name="👤" color={color} />,
                 }}
             />
-            <MainTabs.Screen
+        </MainTabs.Navigator>
+    );
+};
+
+// Main Stack Navigator (Tabs + Modal Screens)
+const MainNavigator = () => {
+    return (
+        <MainStack.Navigator screenOptions={{ headerShown: false }}>
+            <MainStack.Screen name="Tabs" component={TabsNavigator} />
+            <MainStack.Screen
                 name="SearchResults"
                 component={SearchResultsScreen}
-                options={{
-                    tabBarButton: () => null, // Hide from tab bar
-                }}
+                options={{ headerShown: true, title: 'Search Results' }}
             />
-            <MainTabs.Screen
+            <MainStack.Screen
                 name="RideDetails"
                 component={RideDetailsScreen}
-                options={{
-                    tabBarButton: () => null, // Hide from tab bar
-                }}
+                options={{ headerShown: true, title: 'Ride Details' }}
             />
-            <MainTabs.Screen
+            <MainStack.Screen
                 name="EditProfile"
                 component={EditProfileScreen}
-                options={{
-                    tabBarButton: () => null, // Hide from tab bar
-                }}
+                options={{ headerShown: true, title: 'Edit Profile' }}
             />
-            <MainTabs.Screen
+            <MainStack.Screen
                 name="Verification"
                 component={VerificationScreen}
-                options={{
-                    tabBarButton: () => null, // Hide from tab bar
-                }}
+                options={{ headerShown: true, title: 'Verification' }}
             />
-            <MainTabs.Screen
+            <MainStack.Screen
                 name="Notifications"
                 component={NotificationsScreen}
-                options={{
-                    tabBarButton: () => null, // Hide from tab bar
-                }}
+                options={{ headerShown: true, title: 'Notifications' }}
             />
-            <MainTabs.Screen
+            <MainStack.Screen
                 name="Privacy"
                 component={PrivacyScreen}
-                options={{
-                    tabBarButton: () => null, // Hide from tab bar
-                }}
+                options={{ headerShown: true, title: 'Privacy' }}
             />
-            <MainTabs.Screen
+            <MainStack.Screen
                 name="ChatList"
                 component={ChatListScreen}
-                options={{
-                    tabBarButton: () => null, // Hide from tab bar
-                }}
+                options={{ headerShown: true, title: 'Messages' }}
             />
-            <MainTabs.Screen
+            <MainStack.Screen
                 name="Chat"
                 component={ChatScreen}
-                options={{
-                    tabBarButton: () => null, // Hide from tab bar
-                }}
+                options={{ headerShown: true, title: 'Chat' }}
             />
-        </MainTabs.Navigator>
+        </MainStack.Navigator>
     );
 };
 
@@ -227,7 +223,10 @@ const AppNavigator = () => {
     }
 
     return (
-        <NavigationContainer linking={linking}>
+        <NavigationContainer
+            linking={linking}
+            key={session ? 'authenticated' : 'unauthenticated'}
+        >
             <RootStack.Navigator screenOptions={{ headerShown: false }}>
                 {!session ? (
                     <RootStack.Screen name="Auth" component={AuthNavigator} />
