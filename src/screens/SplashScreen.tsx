@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Animated } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
-import AnimatedBackground from '../components/AnimatedBackground';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const SplashScreen = () => {
-    const { theme } = useTheme();
     const scaleAnim = useRef(new Animated.Value(0.3)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    console.log('💫 [SplashScreen] Rendering splash screen...');
 
     useEffect(() => {
         Animated.parallel([
@@ -29,6 +29,10 @@ const SplashScreen = () => {
             flex: 1,
             justifyContent: 'center',
             alignItems: 'center',
+        },
+        gradient: {
+            flex: 1,
+            width: '100%',
         },
         content: {
             alignItems: 'center',
@@ -60,7 +64,12 @@ const SplashScreen = () => {
     });
 
     return (
-        <AnimatedBackground gradient={theme.gradients.hero}>
+        <LinearGradient
+            colors={['#667eea', '#764ba2', '#f093fb']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.gradient}
+        >
             <View style={styles.container}>
                 <Animated.View
                     style={[
@@ -79,7 +88,7 @@ const SplashScreen = () => {
                     <ActivityIndicator size="large" color="#fff" style={styles.loader} />
                 </Animated.View>
             </View>
-        </AnimatedBackground>
+        </LinearGradient>
     );
 };
 

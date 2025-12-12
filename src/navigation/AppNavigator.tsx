@@ -3,6 +3,7 @@ import { Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -55,6 +56,7 @@ const AuthNavigator = () => {
 // Bottom Tabs Navigator (Only visible tabs)
 const TabsNavigator = () => {
     const { theme } = useTheme();
+    const insets = useSafeAreaInsets();
 
     return (
         <MainTabs.Navigator
@@ -63,9 +65,9 @@ const TabsNavigator = () => {
                 tabBarInactiveTintColor: theme.colors.textTertiary,
                 headerShown: false,
                 tabBarStyle: {
-                    paddingBottom: 5,
+                    paddingBottom: 5 + insets.bottom,
                     paddingTop: 5,
-                    height: 60,
+                    height: 60 + insets.bottom,
                     backgroundColor: theme.colors.surface,
                     borderTopWidth: 1,
                     borderTopColor: theme.colors.border,
@@ -76,14 +78,15 @@ const TabsNavigator = () => {
                 tabBarItemStyle: {
                     justifyContent: 'center',
                     alignItems: 'center',
+                    paddingBottom: 8,
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,
                     marginTop: 2,
-                    marginBottom: 0,
+                    marginBottom: 4,
                 },
                 tabBarIconStyle: {
-                    marginBottom: 0,
+                    marginBottom: 4,
                 },
             }}
         >

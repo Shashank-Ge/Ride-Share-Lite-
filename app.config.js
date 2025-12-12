@@ -6,16 +6,20 @@ export default {
         orientation: "portrait",
         icon: "./assets/icon.png",
         userInterfaceStyle: "light",
-        splash: {
-            image: "./assets/splash-icon.png",
-            resizeMode: "contain",
-            backgroundColor: "#ffffff"
-        },
+        owner: "shashankgoel",
         extra: {
+            eas: {
+                projectId: "31e237ca-51d3-422d-8a78-7e25abf712cc"
+            },
             EXPO_PUBLIC_SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL,
             EXPO_PUBLIC_SUPABASE_ANON_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
             EXPO_PUBLIC_OPENROUTE_API_KEY: process.env.EXPO_PUBLIC_OPENROUTE_API_KEY,
             EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
+        },
+        splash: {
+            image: "./assets/splash-icon.png",
+            resizeMode: "contain",
+            backgroundColor: "#ffffff"
         },
         ios: {
             supportsTablet: true,
@@ -29,6 +33,13 @@ export default {
                 backgroundColor: "#ffffff"
             },
             package: "com.ridesharelite.app",
+            versionCode: 1,
+            permissions: [
+                "ACCESS_FINE_LOCATION",
+                "ACCESS_COARSE_LOCATION",
+                "CAMERA",
+                "NOTIFICATIONS"
+            ],
             config: {
                 googleMaps: {
                     apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY
