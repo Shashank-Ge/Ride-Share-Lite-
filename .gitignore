@@ -1,6 +1,6 @@
 # Environment variables
-.env
-.env.local
+# .env
+# .env.local
 
 # Expo
 .expo/
@@ -32,3 +32,7 @@ yarn-error.log
 # Temporary files
 *.tmp
 *.temp
+
+# Native build folders (let EAS prebuild generate these)
+android/
+ios/

@@ -3,7 +3,7 @@
 **Project Type:** College Assignment
 **Course:** Mobile Application Development
 **Created:** October 2025
-**Team:** [Your Name/Team Name]
+**Team:** Shashank Goel
 
 ---
 
@@ -644,7 +644,7 @@ The app is fully functional across iOS, Android, and Web platforms, showcasing c
 
 **Project Repository:** https://github.com/Shashank-Ge/Ride-Share-Lite-.git
 
-**Developed by:** [Your Name/Team Name]
-**Course:** Mobile Application Development
-**Semester:** [Your Semester]
+**Developed by:** Shashank Goel
+**Course:** Product Development
+**Semester:** 3
 **Year:** 2025

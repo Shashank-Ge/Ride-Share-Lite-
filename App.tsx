@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
@@ -10,6 +11,8 @@ import { updatePushToken } from './src/services/database';
 // Wrapper component to access auth context
 function AppContent() {
   const { session } = useAuth();
+
+  console.log('🚀 [AppContent] Component mounted, session:', !!session);
 
   useEffect(() => {
     // Only initialize notifications on mobile (not web)
@@ -74,6 +77,7 @@ function AppContent() {
 }
 
 export default function App() {
+  console.log('🎬 [App] Main App component rendering...');
   return (
     <ThemeProvider>
       <AuthProvider>
