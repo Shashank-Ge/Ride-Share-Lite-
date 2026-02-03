@@ -133,7 +133,17 @@ const PublishScreen = () => {
     };
 
     const handlePublish = async () => {
-        if (!validateStep(4)) return;
+        console.log('🔵 handlePublish called');
+        console.log('Current step:', currentStep);
+        console.log('Is publishing:', isPublishing);
+        console.log('Ride published:', ridePublished);
+        console.log('Session exists:', !!session);
+        console.log('User ID:', session?.user?.id);
+
+        if (!validateStep(4)) {
+            console.log('❌ Validation failed for step 4');
+            return;
+        }
 
         // Prevent multiple clicks
         if (isPublishing || ridePublished) {
@@ -141,18 +151,32 @@ const PublishScreen = () => {
             return;
         }
 
+        console.log('✅ Validation passed, starting publication...');
         setIsPublishing(true);
+
         try {
             console.log('📤 Starting ride publication...');
+            console.log('Form data:', {
+                from: formData.fromLocation,
+                to: formData.toLocation,
+                date: formData.departureDate.toISOString().split('T')[0],
+                time: formData.departureTime,
+                seats: formData.availableSeats,
+                price: formData.pricePerSeat,
+            });
 
             // Check for duplicate rides
             const formattedDate = formData.departureDate.toISOString().split('T')[0];
+            console.log('🔍 Checking for duplicate rides...');
+
             const existingRides = await searchRides({
                 from: formData.fromLocation,
                 to: formData.toLocation,
                 date: formattedDate,
                 passengers: 1,
             });
+
+            console.log(`Found ${existingRides.length} existing rides`);
 
             // Check if there's an identical ride from the same driver
             const duplicate = existingRides.find(
@@ -184,11 +208,16 @@ const PublishScreen = () => {
 
             try {
                 // Geocode locations
+                console.log('📍 Geocoding locations...');
                 const fromCoords = await geocodePlace(formData.fromLocation);
                 const toCoords = await geocodePlace(formData.toLocation);
 
+                console.log('From coords:', fromCoords);
+                console.log('To coords:', toCoords);
+
                 if (fromCoords && toCoords) {
                     // Fetch route
+                    console.log('🛣️ Fetching route between coordinates...');
                     const routeData = await fetchRoute(fromCoords, toCoords);
 
                     if (routeData) {
@@ -201,6 +230,8 @@ const PublishScreen = () => {
                             duration: `${Math.round(routeDuration / 60)} min`,
                             stopovers: dynamicStopovers,
                         });
+                    } else {
+                        console.warn('⚠️ Route data is null');
                     }
                 } else {
                     console.warn('⚠️ Could not geocode locations, proceeding without route data');
@@ -228,8 +259,9 @@ const PublishScreen = () => {
                 stopovers: dynamicStopovers.length > 0 ? dynamicStopovers : formData.stopovers,
             };
 
-            console.log('💾 Creating ride:', rideData);
+            console.log('💾 Creating ride with data:', rideData);
             const result = await createRide(rideData);
+            console.log('📊 Create ride result:', result);
 
             if (result) {
                 console.log('✅ Ride published successfully!');
@@ -266,13 +298,15 @@ const PublishScreen = () => {
                     ]
                 );
             } else {
-                console.error('❌ Failed to publish ride');
-                Alert.alert('Error', 'Failed to publish ride. Please try again.');
+                console.error('❌ Failed to publish ride - result is null');
+                Alert.alert('Error', 'Failed to publish ride. Please check the console for details and try again.');
             }
         } catch (error) {
             console.error('💥 Error publishing ride:', error);
-            Alert.alert('Error', 'An error occurred while publishing your ride. Please try again.');
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            Alert.alert('Error', `An error occurred while publishing your ride: ${error instanceof Error ? error.message : 'Unknown error'}. Please check the console and try again.`);
         } finally {
+            console.log('🏁 Publish process completed, resetting isPublishing');
             setIsPublishing(false);
         }
     };
@@ -597,20 +631,35 @@ const PublishScreen = () => {
                 )}
                 {currentStep < 4 ? (
                     <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-                        <Text style={styles.nextButtonText}>Next →</Text>
+                        <LinearGradient
+                            colors={theme.gradients.primary as any}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={{ padding: 16, borderRadius: 8, alignItems: 'center', flex: 1 }}
+                        >
+                            <Text style={styles.nextButtonText}>Next →</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
                 ) : (
                     <TouchableOpacity
-                        style={[
-                            styles.publishButton,
-                            (isPublishing || ridePublished) && styles.publishButtonDisabled
-                        ]}
+                        style={styles.publishButton}
                         onPress={handlePublish}
                         disabled={isPublishing || ridePublished}
                     >
-                        <Text style={styles.publishButtonText}>
-                            {ridePublished ? '✓ Ride Published' : isPublishing ? 'Publishing...' : '🚀 Publish Ride'}
-                        </Text>
+                        <LinearGradient
+                            colors={
+                                ridePublished || isPublishing
+                                    ? ['#666', '#666']
+                                    : (theme.gradients.primary as any)
+                            }
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={{ padding: 16, borderRadius: 8, alignItems: 'center', flex: 1 }}
+                        >
+                            <Text style={styles.publishButtonText}>
+                                {ridePublished ? '✓ Ride Published' : isPublishing ? 'Publishing...' : '🚀 Publish Ride'}
+                            </Text>
+                        </LinearGradient>
                     </TouchableOpacity>
                 )}
             </View>

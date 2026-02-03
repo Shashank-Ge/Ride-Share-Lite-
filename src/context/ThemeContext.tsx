@@ -25,19 +25,34 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }, []);
 
     const loadThemePreference = async () => {
+        console.log('🎨 [ThemeContext] Loading theme preference...');
+
+        // Set a timeout to prevent hanging
+        const timeout = setTimeout(() => {
+            console.warn('⚠️ [ThemeContext] Theme loading timeout - using default light theme');
+            setIsLoading(false);
+        }, 2000);
+
         try {
             const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+            clearTimeout(timeout);
+
+            console.log('🎨 [ThemeContext] Saved theme:', savedTheme);
+
             if (savedTheme === 'light' || savedTheme === 'dark') {
                 setThemeModeState(savedTheme);
             } else {
                 // Use system preference if no saved preference
                 const systemTheme = Appearance.getColorScheme();
+                console.log('🎨 [ThemeContext] Using system theme:', systemTheme);
                 setThemeModeState(systemTheme === 'dark' ? 'dark' : 'light');
             }
         } catch (error) {
-            console.error('Failed to load theme preference:', error);
+            console.error('❌ [ThemeContext] Failed to load theme preference:', error);
+            clearTimeout(timeout);
         } finally {
             setIsLoading(false);
+            console.log('✅ [ThemeContext] Theme loaded successfully');
         }
     };
 

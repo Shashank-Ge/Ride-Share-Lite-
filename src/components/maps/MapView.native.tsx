@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import RNMapView, { Marker, Polyline, PROVIDER_DEFAULT } from 'react-native-maps';
+import RNMapView, { Marker, Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useTheme } from '../../context/ThemeContext';
 
 interface MapViewProps {
@@ -51,7 +51,7 @@ const MapView: React.FC<MapViewProps> = ({
         <View style={styles.container}>
             <RNMapView
                 style={styles.map}
-                provider={PROVIDER_DEFAULT}
+                provider={PROVIDER_GOOGLE}
                 initialRegion={region}
                 showsUserLocation={false}
                 showsMyLocationButton={false}

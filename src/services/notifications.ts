@@ -231,3 +231,141 @@ export const setupNotificationListeners = (
         Notifications.removeNotificationSubscription(responseListener);
     };
 };
+
+// ============================================
+// PUSH NOTIFICATION FUNCTIONS
+// ============================================
+
+/**
+ * Send push notification via Expo Push API
+ */
+export const sendPushNotification = async (
+    pushToken: string,
+    title: string,
+    body: string,
+    data?: any
+): Promise<boolean> => {
+    try {
+        console.log('📨 Sending push notification to token:', pushToken.substring(0, 20) + '...');
+
+        const message = {
+            to: pushToken,
+            sound: 'default',
+            title,
+            body,
+            data: data || {},
+        };
+
+        const response = await fetch('https://exp.host/--/api/v2/push/send', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(message),
+        });
+
+        const result = await response.json();
+        console.log('✅ Push notification sent:', result);
+        return true;
+    } catch (error) {
+        console.error('❌ Error sending push notification:', error);
+        return false;
+    }
+};
+
+/**
+ * Send notification to a specific user by fetching their push token
+ */
+export const sendNotificationToUser = async (
+    userId: string,
+    title: string,
+    body: string,
+    data?: any
+): Promise<boolean> => {
+    try {
+        console.log('📨 Sending notification to user:', userId);
+
+        // Import supabase here to avoid circular dependency
+        const { supabase } = require('./supabase');
+
+        // Fetch user's push token from database
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('push_token')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error('❌ Error fetching user profile:', error);
+            return false;
+        }
+
+        if (!profile?.push_token) {
+            console.log('⚠️ User has no push token registered');
+            return false;
+        }
+
+        // Send push notification
+        return await sendPushNotification(profile.push_token, title, body, data);
+    } catch (error) {
+        console.error('❌ Error sending notification to user:', error);
+        return false;
+    }
+};
+
+/**
+ * Send booking confirmation push notification to passenger
+ */
+export const sendBookingConfirmedPush = async (
+    passengerId: string,
+    rideDetails: {
+        from: string;
+        to: string;
+        date: string;
+        time: string;
+    }
+): Promise<boolean> => {
+    return await sendNotificationToUser(
+        passengerId,
+        'Booking Confirmed! 🎉',
+        `Your ride from ${rideDetails.from} to ${rideDetails.to} on ${rideDetails.date} at ${rideDetails.time} has been confirmed!`,
+        { type: 'booking_confirmed', ...rideDetails }
+    );
+};
+
+/**
+ * Send booking rejection push notification to passenger
+ */
+export const sendBookingRejectedPush = async (
+    passengerId: string,
+    rideDetails: {
+        from: string;
+        to: string;
+        date: string;
+    }
+): Promise<boolean> => {
+    return await sendNotificationToUser(
+        passengerId,
+        'Booking Rejected ❌',
+        `Your booking request for ${rideDetails.from} to ${rideDetails.to} on ${rideDetails.date} was not accepted.`,
+        { type: 'booking_rejected', ...rideDetails }
+    );
+};
+
+/**
+ * Send new booking request push notification to driver
+ */
+export const sendNewBookingRequestPush = async (
+    driverId: string,
+    passengerName: string,
+    seats: number,
+    route: string
+): Promise<boolean> => {
+    return await sendNotificationToUser(
+        driverId,
+        'New Booking Request 📨',
+        `${passengerName} wants to book ${seats} seat(s) for ${route}`,
+        { type: 'booking_request', passengerName, seats, route }
+    );
+};

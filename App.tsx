@@ -1,12 +1,19 @@
+import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
-import { AuthProvider } from './src/context/AuthContext';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
-import { requestNotificationPermissions, setupNotificationListeners } from './src/services/notifications';
+import { requestNotificationPermissions, setupNotificationListeners, getPushToken } from './src/services/notifications';
+import { updatePushToken } from './src/services/database';
 
-export default function App() {
+// Wrapper component to access auth context
+function AppContent() {
+  const { session } = useAuth();
+
+  console.log('🚀 [AppContent] Component mounted, session:', !!session);
+
   useEffect(() => {
     // Only initialize notifications on mobile (not web)
     if (Platform.OS !== 'web') {
@@ -30,11 +37,51 @@ export default function App() {
     }
   }, []);
 
+  // Register push token when user logs in
+  useEffect(() => {
+    const registerPushToken = async () => {
+      if (Platform.OS === 'web') {
+        console.log('⚠️ Push notifications not supported on web');
+        return;
+      }
+
+      if (!session?.user?.id) {
+        console.log('⚠️ No user session, skipping push token registration');
+        return;
+      }
+
+      try {
+        console.log('📱 Registering push token for user:', session.user.id);
+        const token = await getPushToken();
+
+        if (token) {
+          await updatePushToken(session.user.id, token);
+          console.log('✅ Push token registered successfully');
+        } else {
+          console.log('⚠️ Failed to get push token');
+        }
+      } catch (error) {
+        console.error('❌ Error registering push token:', error);
+      }
+    };
+
+    registerPushToken();
+  }, [session?.user?.id]);
+
+  return (
+    <>
+      <AppNavigator />
+      <StatusBar style="auto" />
+    </>
+  );
+}
+
+export default function App() {
+  console.log('🎬 [App] Main App component rendering...');
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AppNavigator />
-        <StatusBar style="auto" />
+        <AppContent />
       </AuthProvider>
     </ThemeProvider>
   );

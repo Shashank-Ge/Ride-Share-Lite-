@@ -35,6 +35,7 @@ export interface Profile {
     avatar_url?: string;
     bio?: string;
     phone?: string;
+    push_token?: string;
     created_at: string;
 }
 
@@ -315,6 +316,31 @@ export const updateProfile = async (userId: string, updates: Partial<Profile>): 
 };
 
 /**
+ * Update user's push notification token
+ */
+export const updatePushToken = async (userId: string, pushToken: string): Promise<boolean> => {
+    try {
+        console.log('📨 Updating push token for user:', userId);
+
+        const { error } = await supabase
+            .from('profiles')
+            .update({ push_token: pushToken })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('❌ Error updating push token:', error);
+            throw error;
+        }
+
+        console.log('✅ Push token updated successfully');
+        return true;
+    } catch (error) {
+        console.error('💥 Failed to update push token:', error);
+        return false;
+    }
+};
+
+/**
  * Create a new profile (called during registration)
  */
 export const createProfile = async (profileData: {
@@ -374,21 +400,35 @@ export const createBooking = async (bookingData: {
     try {
         console.log('📝 Creating booking:', bookingData);
 
+        // Add timestamps required by database schema
+        const now = new Date().toISOString();
+        const bookingWithTimestamps = {
+            ...bookingData,
+            created_at: now,
+            updated_at: now,
+        };
+
         const { data, error } = await supabase
             .from('bookings')
-            .insert([bookingData])
+            .insert([bookingWithTimestamps])
             .select()
             .single();
 
         if (error) {
             console.error('❌ Error creating booking:', error);
+            console.error('❌ Error code:', error.code);
+            console.error('❌ Error message:', error.message);
+            console.error('❌ Error details:', error.details);
             throw error;
         }
 
         console.log('✅ Booking created successfully:', data);
         return data;
-    } catch (error) {
+    } catch (error: any) {
         console.error('💥 Failed to create booking:', error);
+        console.error('💥 Error name:', error?.name);
+        console.error('💥 Error message:', error?.message);
+        console.error('💥 Full error:', JSON.stringify(error, null, 2));
         return null;
     }
 };

@@ -56,29 +56,54 @@ const ProfileScreen = () => {
     };
 
     const handleLogout = async () => {
-        console.log('Logout button pressed');
+        console.log('🔴 Logout button pressed');
 
-        Alert.alert(
-            'Logout',
-            'Are you sure you want to logout?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Logout',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            console.log('User confirmed logout, calling signOut...');
-                            await signOut();
-                            console.log('SignOut completed successfully');
-                        } catch (error: any) {
-                            console.error('Logout error:', error);
-                            Alert.alert('Error', error.message || 'Failed to logout');
-                        }
+        // For web, use window.confirm; for mobile, use Alert
+        if (Platform.OS === 'web') {
+            console.log('🌐 Using web confirmation dialog');
+            const confirmed = window.confirm('Are you sure you want to logout?');
+            console.log('🌐 User confirmation:', confirmed);
+
+            if (confirmed) {
+                try {
+                    console.log('✅ User confirmed logout, calling signOut...');
+                    await signOut();
+                    console.log('✅ SignOut completed successfully');
+                } catch (error: any) {
+                    console.error('❌ Logout error:', error);
+                    window.alert('Error: ' + (error.message || 'Failed to logout'));
+                }
+            } else {
+                console.log('❌ User cancelled logout');
+            }
+        } else {
+            console.log('📱 Using mobile Alert dialog');
+            Alert.alert(
+                'Logout',
+                'Are you sure you want to logout?',
+                [
+                    {
+                        text: 'Cancel',
+                        style: 'cancel',
+                        onPress: () => console.log('❌ User cancelled logout')
                     },
-                },
-            ]
-        );
+                    {
+                        text: 'Logout',
+                        style: 'destructive',
+                        onPress: async () => {
+                            try {
+                                console.log('✅ User confirmed logout, calling signOut...');
+                                await signOut();
+                                console.log('✅ SignOut completed successfully');
+                            } catch (error: any) {
+                                console.error('❌ Logout error:', error);
+                                Alert.alert('Error', error.message || 'Failed to logout');
+                            }
+                        },
+                    },
+                ]
+            );
+        }
     };
 
     const getInitials = () => {
