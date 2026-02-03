@@ -47,7 +47,8 @@ export default {
             }
         },
         web: {
-            favicon: "./assets/favicon.png"
+            favicon: "./assets/favicon.png",
+            bundler: "metro"
         }
     }
 };
